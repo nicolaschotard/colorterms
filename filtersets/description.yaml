@@ -1,1 +1,2 @@
 megacam: {g: g.ascii, i: i.ascii, i2: i2.ascii, r: r.ascii, u: u.ascii, z: z.ascii}
+sdss: {g: g.dat, i: i.dat, r: r.dat, u: u.dat, z: z.dat}
