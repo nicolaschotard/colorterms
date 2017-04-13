@@ -40,7 +40,6 @@ class TimeSpec:
         - FilterWheels
         - Filters
         - RefSpec
-        (- VegaMags)
         """
         
         # Check first if the filters are already loaded
@@ -51,17 +50,10 @@ class TimeSpec:
         self.filterWheels, self.filters = load_filter_sets(self.dir, self.cards)
         
         # Load the reference spectrum:
-        # Vega for SALT2 and BD17 for SALT2.2
         lbda, flux = np.loadtxt(JOIN(self.dir, self.cards['REF_SPECTRUM']),
                                 unpack=True)
         self.RefSpec = OneSpec
         (lbda,flux)
-
-        self.VegaMags=None
-        if self.useVegaMags and self.cards.has_key('VEGAMAGS'):
-            lbda,flux = np.loadtxt(JOIN(self.dir, self.cards['VEGAMAGS']),
-                                   unpack=True)
-            self.VegaMags=OneSpec(lbda,flux)
 
     def _check_filter(self, syst, filt):
         """
@@ -126,10 +118,6 @@ class TimeSpec:
         if self.magoffsets is not None and self.magoffsets.has_key(syst):
             if self.magoffsets[syst].has_key(filter):
                 outmag += self.magoffsets[syst][filter]
-        elif self.VegaMags is not None:
-            outmag += np.interp(filt.mean_wlength(),
-                                self.VegaMags.lbda,
-                                self.VegaMags.flux)
 
         if var is not None:
             var = integ_photons_variance(lbda, var, step, filt.lbda, filt.flux)
@@ -144,9 +132,6 @@ class TimeSpec:
 
         return 2.5 / np.log(10.) * x0err / x0
 
-# ==============================================================================
-# Utilities ====================================================================
-# ==============================================================================
 
 # Magnitudes utilities====================
 
@@ -171,50 +156,6 @@ def integ_photons_variance(lbda, var, step, flbda, filter):
     dphotons = ((filter_interp * lbda * 5.006909561e7)**2) * var
     return np.sum(dphotons * (step**2))
 
-# SALT2 utilities====================
-
-# Read files
-def read_salt2_cards(file_name):
-    """
-    Read the cards SALT2 file. Return a dictionnay containing its informations
-    """
-
-    keys, values = np.loadtxt(file_name, unpack=True, dtype='string')
-    cards = dict([(k[1:], v) for k, v in zip(keys, values)])
-
-    # Now check for the version of SALT2 (GUY07 or SNLS3)
-    path = file_name.replace('fitmodel.card', '')
-
-    # Vega or BD17 spectrum
-    lines = [l for l in open(path + cards['VEGA']).readlines()
-             if not l.startswith('#')]
-    #vk, vv = np.loadtxt(, unpack=True, dtype='string')
-    #if vk[0] == '@SPECTRUM':
-    if lines[0].startswith('@SPECTRUM'):
-        #cards['REF_SPECTRUM'] = vv[0]
-        cards['REF_SPECTRUM'] = lines[0].split(' ')[1].replace('\n', '')
-    else:
-        cards['REF_SPECTRUM'] = cards['VEGA']
-
-    return cards
-
-def load_mag_offset(path, cards):
-    """
-    Load the magnitude offsets to apply for the SALT2.2 mag systems.
-    """
-    # check the SALT2 version
-    if not cards['SALT2'] == 'salt2-2-0':
-        return None
-
-    # get the magnitudes offset
-    lines = np.loadtxt(JOIN(path,cards['VEGA']), dtype='string', skiprows=4)
-    d=dict([(l[0],{}) for l in lines if l[0] != 'MEGACAM'])
-    for l in lines:
-        if l[0] == 'MEGACAM':
-            continue
-        d[l[0]][l[1]] = float(l[2])
-
-    return d
 
 def load_filter_sets(path, cards):
     """
