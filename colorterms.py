@@ -60,18 +60,19 @@ class Spectrum(object):
         # check filter
         filto = self.filters._check_filter(syst, filt)
 
-        photons = integ_photons(self.lbda, self.flux, step, filto.lbda, filto.flux)
-        #refphotons = integ_photons(self.RefSpec.lbda, self.RefSpec.flux,
+        photons = integ_photons(self.lbda, self.flux, step, filto.lbda,
+                                filto.flux)
+        # refphotons = integ_photons(self.RefSpec.lbda, self.RefSpec.flux,
         #                           None, filt.lbda, filt.flux)
 
-        if photons is None: # or refphotons is None:
+        if photons is None:  # or refphotons is None:
             if var is None:
                 return -float(np.inf), float(np.inf)
             else:
                 return -float(np.inf), float(np.inf)
 
-        outmag = -2.5 / np.log(10) * np.log(photons) # / refphotons)
-        #if self.magoffsets is not None and self.magoffsets.has_key(syst):
+        outmag = -2.5 / np.log(10) * np.log(photons)  # / refphotons)
+        # if self.magoffsets is not None and self.magoffsets.has_key(syst):
         #    if self.magoffsets[syst].has_key(filter):
         #        outmag += self.magoffsets[syst][filter]
 
@@ -130,7 +131,8 @@ class Filters(object):
         data = {}
         for filt in self.filtersets[fset]:
             print(" - loading %s" % filt)
-            d = np.loadtxt("%s/%s/%s" % (self.path_to_filters, fset, self.filtersets[fset][filt]))
+            d = np.loadtxt("%s/%s/%s" % (self.path_to_filters, fset,
+                           self.filtersets[fset][filt]), unpack=True)
             data[filt] = OneSpec(d[0], d[1])
         return data
 
@@ -143,8 +145,8 @@ class Filters(object):
         def check_attributes(f):
             """Check attributes of the given filter set."""
             return hasattr(f, 'mean_wlength') & \
-                   hasattr(f, 'lbda') & \
-                   hasattr(f, 'flux')
+                hasattr(f, 'lbda') & \
+                hasattr(f, 'flux')
 
         # if filt is a OneSpec object
         if check_attributes(filt):
@@ -163,6 +165,7 @@ class Filters(object):
 
 # Magnitudes utilities====================
 
+
 def integ_photons(lbda, flux, step, flbda, filter):
 
     if flbda[0] < lbda[0] or flbda[-1] > lbda[-2]:
@@ -172,9 +175,10 @@ def integ_photons(lbda, flux, step, flbda, filter):
     filter_interp = np.interp(lbda, flbda, filter)
     dphotons = (filter_interp * flux) * lbda * 5.006909561e7
     if step is None:
-        return np.trapz(dphotons,lbda)
+        return np.trapz(dphotons, lbda)
     else:
         return np.sum(dphotons*step)
+
 
 def integ_photons_variance(lbda, var, step, flbda, filter):
 
@@ -184,17 +188,21 @@ def integ_photons_variance(lbda, var, step, flbda, filter):
     dphotons = ((filter_interp * lbda * 5.006909561e7)**2) * var
     return np.sum(dphotons * (step**2))
 
-def load_catalogs(path="catalogs", catalog="gunnstryker", ext=".ascii", desc="lbd,flux"):
+
+def load_catalogs(path="catalogs", catalog="gunnstryker", ext=".ascii",
+                  desc="lbd,flux"):
 
     if catalog == "gunnstryker":
         # paths
         spectra = sorted(glob(path + "/" + catalog + "/gs_*.ascii"))
-        CATALOGS[catalog] = {int(sp.split('_')[1].split('.')[0]): {'path': sp, 'type': 'unknown',
-                                                                   'lbda': None, 'flux': None}
+        CATALOGS[catalog] = {int(sp.split('_')[1].split('.')[0]):
+                             {'path': sp, 'type': 'unknown',
+                              'lbda': None, 'flux': None}
                              for sp in spectra}
 
         # spectrum type is any
-        spectype = np.loadtxt(path + "/" + catalog + "/gsspectype.ascii", dtype='str', unpack=True)
+        spectype = np.loadtxt(path + "/" + catalog + "/gsspectype.ascii",
+                              dtype='str', unpack=True)
         for i, gs in enumerate(spectype[0]):
             CATALOGS[catalog][int(gs.split('_')[1].split('.')[0])]['type'] = spectype[1][i]
 
@@ -202,6 +210,6 @@ def load_catalogs(path="catalogs", catalog="gunnstryker", ext=".ascii", desc="lb
         for sp in spectra:
             x, y = np.loadtxt(sp, dtype='float', unpack=True)
             num = int(sp.split('_')[1].split('.')[0])
-            CATALOGS[catalog][num]['lbda'], CATALOGS[catalog][num]['flux'] = x, y            
+            CATALOGS[catalog][num]['lbda'], CATALOGS[catalog][num]['flux'] = x, y
     else:  # use input args
         spectra = glob(path + "/" + catalog + "/*.ext")
