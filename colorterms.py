@@ -1,12 +1,15 @@
 #!/usr/bin/env python
 
-import os
+
+from glob import glob
 import numpy as np
 import yaml
 
-JOIN = os.path.join
 
-class OneSpec:
+CATALOGS = {}
+
+
+class OneSpec(object):
 
     def __init__(self, lbda, flux, var=None):
 
@@ -15,33 +18,31 @@ class OneSpec:
         self.lbda = self.x
         self.flux = self.y
         self.var = var
+        self.object_type = None
 
     def mean_wlength(self):
 
         return np.sum(self.lbda * self.flux) / np.sum(self.flux)
 
+
 class Spectrum(object):
 
-    def __init__(self, lbda, flux, var=None):
+    def __init__(self, lbda, flux, var=None, fpath='filtersets'):
 
         self.lbda = np.array(lbda)
         self.flux = np.array(flux)
         self.var = np.array(var)
+        self._load_filters(fpath)
 
-    # Filters ============
-    def load_filters(self, path):
+    def _load_filters(self, path):
         """Load all avalaible filter sets"""
-        
-        # Check first if the filters are already loaded
-        if not hasattr(self,'filters'):
-            # are the filter set already loaded
-            if FILTERS is None:
-                # load all avalaible filter sets
-                FILTERS = Filters(path)
-            self.filters = FILTERS
 
-    def mag(self, var=None, step=None,
-            syst='STANDARD', filter='B'):
+        # Check first if the filters are already loaded
+        if not hasattr(self, 'filters'):
+            # are the filter set already loaded
+            self.filters = Filters(path_to_filters=path)
+
+    def mag(self, var=None, step=None, syst='megacam', filt='g'):
         """
         Computes the magnitude of a given spectrum.
 
@@ -57,22 +58,22 @@ class Spectrum(object):
         """
 
         # check filter
-        filt = self._check_filter(syst, filter)
+        filto = self.filters._check_filter(syst, filt)
 
-        photons = integ_photons(lbda, flux, step, filt.lbda, filt.flux)
-        refphotons = integ_photons(self.RefSpec.lbda, self.RefSpec.flux,
-                                   None, filt.lbda, filt.flux)
+        photons = integ_photons(self.lbda, self.flux, step, filto.lbda, filto.flux)
+        #refphotons = integ_photons(self.RefSpec.lbda, self.RefSpec.flux,
+        #                           None, filt.lbda, filt.flux)
 
-        if photons is None or refphotons is None:
+        if photons is None: # or refphotons is None:
             if var is None:
                 return -float(np.inf), float(np.inf)
             else:
                 return -float(np.inf), float(np.inf)
 
-        outmag = -2.5 / np.log(10) * np.log(photons / refphotons)
-        if self.magoffsets is not None and self.magoffsets.has_key(syst):
-            if self.magoffsets[syst].has_key(filter):
-                outmag += self.magoffsets[syst][filter]
+        outmag = -2.5 / np.log(10) * np.log(photons) # / refphotons)
+        #if self.magoffsets is not None and self.magoffsets.has_key(syst):
+        #    if self.magoffsets[syst].has_key(filter):
+        #        outmag += self.magoffsets[syst][filter]
 
         if var is not None:
             var = integ_photons_variance(lbda, var, step, filt.lbda, filt.flux)
@@ -86,18 +87,24 @@ class Spectrum(object):
         (only x0 component is included)"""
 
         return 2.5 / np.log(10.) * x0err / x0
-        
+
+
 class Filters(object):
-        
-    def read_filterset_descriptions(path="filtersets"):
+
+    def __init__(self, path_to_filters="filtersets"):
+        """Load all available filter sets."""
+        self.path_to_filters = path_to_filters
+        self._load_filters()
+
+    def _read_filterset_descriptions(self):
         """
-        Get all filter sets description
-        
+        Get all filter sets description.
+
         Return a dictionnary containing the different sets of filters
         """
-        self.filtersets = yaml.load(path + "/description.yaml")
-        
-     def load_filters(self, path):
+        self.filtersets = yaml.load(open(self.path_to_filters + "/description.yaml"))
+
+    def _load_filters(self):
         """
         Load the filter names and transmission stored in the model directory.
         Also load the reference spectrum used in the model (for magnitude).
@@ -106,20 +113,27 @@ class Filters(object):
         - Filters
         - RefSpec
         """
-        
+        # Get the filter description
+        self._read_filterset_descriptions()
+
         # Check first if the filters are already loaded
-        if hasattr(self,'filters'):
+        if hasattr(self, 'filters'):
             return
 
         # will load all the avalaible filters
-        self.filters = load_filter_sets(self.dir, self.cards)
-        
-        # Load the reference spectrum:
-        lbda, flux = np.loadtxt(JOIN(self.dir, self.cards['REF_SPECTRUM']),
-                                unpack=True)
-        self.RefSpec = OneSpec
-        (lbda,flux)   
-        
+        self.filters = {fset: self._load_filter_set(fset)
+                        for fset in self.filtersets}
+
+    def _load_filter_set(self, fset):
+        """Load a given filter set."""
+        print("INFO: Loading %s filter set" % fset)
+        data = {}
+        for filt in self.filtersets[fset]:
+            print(" - loading %s" % filt)
+            d = np.loadtxt("%s/%s/%s" % (self.path_to_filters, fset, self.filtersets[fset][filt]))
+            data[filt] = OneSpec(d[0], d[1])
+        return data
+
     def _check_filter(self, syst, filt):
         """
         Make sure that a given filter is a OneSpec object or is in the list
@@ -127,21 +141,21 @@ class Filters(object):
         """
 
         def check_attributes(f):
-
-            return hasattr(f,'mean_wlength') & \
-                   hasattr(f,'lbda') & \
-                   hasattr(f,'flux')
+            """Check attributes of the given filter set."""
+            return hasattr(f, 'mean_wlength') & \
+                   hasattr(f, 'lbda') & \
+                   hasattr(f, 'flux')
 
         # if filt is a OneSpec object
-        if check_attributes(filt): 
+        if check_attributes(filt):
             return filt
-        
+
         # check the system of filters
-        if not self.filters.has_key(syst):
+        if syst not in self.filters:
             raise KeyError("Selected system (%s) not in self.filters"%syst)
-        
+
         # Check if the asked filter is in the list
-        if self.filters[syst].has_key(filt):
+        if filt in self.filters[syst]:
             return self.filters[syst][filt]
         else:
             raise KeyError("Selected filter (%s) does not exist or has the '\
@@ -152,8 +166,8 @@ class Filters(object):
 def integ_photons(lbda, flux, step, flbda, filter):
 
     if flbda[0] < lbda[0] or flbda[-1] > lbda[-2]:
-        print 'Error: %f<%f or %f>%f'%\
-              (flbda[0], lbda[0], flbda[-1], lbda[-2])
+        print('Error: %f<%f or %f>%f'%\
+              (flbda[0], lbda[0], flbda[-1], lbda[-2]))
         return None
     filter_interp = np.interp(lbda, flbda, filter)
     dphotons = (filter_interp * flux) * lbda * 5.006909561e7
@@ -169,3 +183,25 @@ def integ_photons_variance(lbda, var, step, flbda, filter):
     filter_interp = np.interp(lbda, flbda, filter)
     dphotons = ((filter_interp * lbda * 5.006909561e7)**2) * var
     return np.sum(dphotons * (step**2))
+
+def load_catalogs(path="catalogs", catalog="gunnstryker", ext=".ascii", desc="lbd,flux"):
+
+    if catalog == "gunnstryker":
+        # paths
+        spectra = sorted(glob(path + "/" + catalog + "/gs_*.ascii"))
+        CATALOGS[catalog] = {int(sp.split('_')[1].split('.')[0]): {'path': sp, 'type': 'unknown',
+                                                                   'lbda': None, 'flux': None}
+                             for sp in spectra}
+
+        # spectrum type is any
+        spectype = np.loadtxt(path + "/" + catalog + "/gsspectype.ascii", dtype='str', unpack=True)
+        for i, gs in enumerate(spectype[0]):
+            CATALOGS[catalog][int(gs.split('_')[1].split('.')[0])]['type'] = spectype[1][i]
+
+        # data
+        for sp in spectra:
+            x, y = np.loadtxt(sp, dtype='float', unpack=True)
+            num = int(sp.split('_')[1].split('.')[0])
+            CATALOGS[catalog][num]['lbda'], CATALOGS[catalog][num]['flux'] = x, y            
+    else:  # use input args
+        spectra = glob(path + "/" + catalog + "/*.ext")
