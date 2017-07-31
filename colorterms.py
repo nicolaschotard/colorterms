@@ -40,7 +40,7 @@ class Spectrum(object):
         # Check first if the filters are already loaded
         if not hasattr(self, 'filters'):
             # are the filter set already loaded
-            self.filters = Filters(path_to_filters=path)
+            self.filters = Filters(path_to_filters=path, verbose=False)
 
     def mag(self, var=None, step=None, syst='megacam', filt='g'):
         """
@@ -92,10 +92,10 @@ class Spectrum(object):
 
 class Filters(object):
 
-    def __init__(self, path_to_filters="filtersets"):
+    def __init__(self, path_to_filters="filtersets", verbose=True):
         """Load all available filter sets."""
         self.path_to_filters = path_to_filters
-        self._load_filters()
+        self._load_filters(verbose=verbose)
 
     def _read_filterset_descriptions(self):
         """
@@ -105,7 +105,7 @@ class Filters(object):
         """
         self.filtersets = yaml.load(open(self.path_to_filters + "/description.yaml"))
 
-    def _load_filters(self):
+    def _load_filters(self, verbose=True):
         """
         Load the filter names and transmission stored in the model directory.
         Also load the reference spectrum used in the model (for magnitude).
@@ -122,15 +122,17 @@ class Filters(object):
             return
 
         # will load all the avalaible filters
-        self.filters = {fset: self._load_filter_set(fset)
+        self.filters = {fset: self._load_filter_set(fset, verbose=verbose)
                         for fset in self.filtersets}
 
-    def _load_filter_set(self, fset):
+    def _load_filter_set(self, fset, verbose=True):
         """Load a given filter set."""
-        print("INFO: Loading %s filter set" % fset)
+        if verbose:
+            print("INFO: Loading %s filter set" % fset)
         data = {}
         for filt in self.filtersets[fset]:
-            print(" - loading %s" % filt)
+            if verbose:
+                print(" - loading %s" % filt)
             d = np.loadtxt("%s/%s/%s" % (self.path_to_filters, fset,
                            self.filtersets[fset][filt]), unpack=True)
             data[filt] = OneSpec(d[0], d[1])
@@ -197,7 +199,7 @@ def load_catalogs(path="catalogs", catalog="gunnstryker", ext=".ascii",
         spectra = sorted(glob(path + "/" + catalog + "/gs_*.ascii"))
         CATALOGS[catalog] = {int(sp.split('_')[1].split('.')[0]):
                              {'path': sp, 'type': 'unknown',
-                              'lbda': None, 'flux': None}
+                              'lbda': None, 'flux': None, 'spec': None}
                              for sp in spectra}
 
         # spectrum type is any
@@ -207,9 +209,12 @@ def load_catalogs(path="catalogs", catalog="gunnstryker", ext=".ascii",
             CATALOGS[catalog][int(gs.split('_')[1].split('.')[0])]['type'] = spectype[1][i]
 
         # data
+        filtersets = '/'.join(path.split('/')[:-1] + ['filtersets'])
         for sp in spectra:
             x, y = np.loadtxt(sp, dtype='float', unpack=True)
             num = int(sp.split('_')[1].split('.')[0])
-            CATALOGS[catalog][num]['lbda'], CATALOGS[catalog][num]['flux'] = x, y
+            CATALOGS[catalog][num]['lbda'] = x
+            CATALOGS[catalog][num]['flux'] = y
+            CATALOGS[catalog][num]['spec'] = Spectrum(x, y, fpath=filtersets)
     else:  # use input args
         spectra = glob(path + "/" + catalog + "/*.ext")
