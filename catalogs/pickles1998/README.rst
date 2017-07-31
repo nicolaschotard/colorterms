@@ -1,3 +1,5 @@
+From http://cdsarc.u-strasbg.fr/viz-bin/ftp-index?J/PASP/110/863
+
 J/PASP/110/863  A Stellar Spectral Flux Library: 1150 - 25000 A (Pickles 1998)
 ================================================================================
 A Stellar Spectral Flux Library: 1150 - 25000 A
