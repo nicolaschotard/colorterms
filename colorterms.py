@@ -4,6 +4,7 @@
 from glob import glob
 import numpy as np
 import yaml
+import pylab as plt
 
 
 CATALOGS = {}
@@ -11,21 +12,41 @@ CATALOGS = {}
 
 class OneSpec(object):
 
-    def __init__(self, lbda, flux, var=None):
+    """
+    Single spectrum object with basic atributes.
 
-        self.x = np.array(lbda, dtype='float')
-        self.y = np.array(flux, dtype='float')
-        self.lbda = self.x
-        self.flux = self.y
+    lbda: Wavelength
+    flux: Flux or transmission
+    var:  Variance associated t o the flux (optionnal)
+    otype: Type of the object loaded (optionnal)
+    """
+
+    def __init__(self, lbda, flux, var=None, otype=None):
+        """
+        Create a OneSpec instance with wavelength (lbda), flux (flux) and variance (var).
+        """
+        self.lbda = np.array(lbda, dtype='float')
+        self.flux = np.array(flux, dtype='float')
         self.var = var
-        self.object_type = None
+        self.otype = otype
 
     def mean_wlength(self):
-
+        """Return effective mean wavelength."""
         return np.sum(self.lbda * self.flux) / np.sum(self.flux)
+
+    def min_wlength(self):
+        """Return lower wavelength boundary."""
+        return np.min(self.lbda)
+
+    def max_wlength(self):
+        """Return higher wavelength boundary."""
+        return np.max(self.lbda)
 
 
 class Spectrum(object):
+    """Create a spectrum instance with a few useful methods"""
+
+    filters = None
 
     def __init__(self, lbda, flux, var=None, fpath='filtersets'):
 
@@ -38,9 +59,8 @@ class Spectrum(object):
         """Load all avalaible filter sets"""
 
         # Check first if the filters are already loaded
-        if not hasattr(self, 'filters'):
-            # are the filter set already loaded
-            self.filters = Filters(path_to_filters=path, verbose=False)
+        if self.filters is None:
+            Spectrum.filters = Filters(path_to_filters=path, verbose=False)
 
     def mag(self, var=None, step=None, syst='megacam', filt='g'):
         """
@@ -95,7 +115,8 @@ class Filters(object):
     def __init__(self, path_to_filters="filtersets", verbose=True):
         """Load all available filter sets."""
         self.path_to_filters = path_to_filters
-        self._load_filters(verbose=verbose)
+        self.load_filters(verbose=verbose)
+        self.ordered = self.order_by_wlength()
 
     def _read_filterset_descriptions(self):
         """
@@ -105,7 +126,7 @@ class Filters(object):
         """
         self.filtersets = yaml.load(open(self.path_to_filters + "/description.yaml"))
 
-    def _load_filters(self, verbose=True):
+    def load_filters(self, verbose=True):
         """
         Load the filter names and transmission stored in the model directory.
         Also load the reference spectrum used in the model (for magnitude).
@@ -165,15 +186,42 @@ class Filters(object):
             raise KeyError("Selected filter (%s) does not exist or has the '\
                            'wrongattributes"%filt)
 
+    def plot_filters(self):
+        """Simple transmission plots."""
+        for syst in self.filters:
+            fig = plt.figure(dpi=150)
+            ax = fig.add_subplot(111,
+                                 xlabel='Wavelenght',
+                                 ylabel='Transmission',
+                                 title=syst)
+            for filt in self.filters[syst]:
+                ax.plot(self.filters[syst][filt].lbda,
+                        self.filters[syst][filt].flux,
+                        label=filt)
+                ax.legend(loc='best')
+
+    def order_by_wlength(self):
+        """
+        Order filters by average wavelength values for each system.
+
+        Return a dictionnary of orderer arrays.
+        """
+        ofilt = {}
+        for syst in self.filters:
+            filters = np.array(sorted(self.filters[syst]))
+            meanw = np.array([self.filters[syst][filt].mean_wlength() for filt in filters])
+            ofilt[syst] = filters[np.argsort(meanw)]
+        return ofilt
+
 # Magnitudes utilities====================
 
 
 def integ_photons(lbda, flux, step, flbda, filter):
 
-    if flbda[0] < lbda[0] or flbda[-1] > lbda[-2]:
-        print('Error: %f<%f or %f>%f'%\
-              (flbda[0], lbda[0], flbda[-1], lbda[-2]))
-        return None
+#    if flbda[0] < lbda[0] or flbda[-1] > lbda[-2]:
+#        print('Error: %f<%f or %f>%f'%\
+#              (flbda[0], lbda[0], flbda[-1], lbda[-2]))
+#        return None
     filter_interp = np.interp(lbda, flbda, filter)
     dphotons = (filter_interp * flux) * lbda * 5.006909561e7
     if step is None:
@@ -182,11 +230,11 @@ def integ_photons(lbda, flux, step, flbda, filter):
         return np.sum(dphotons*step)
 
 
-def integ_photons_variance(lbda, var, step, flbda, filter):
+def integ_photons_variance(lbda, var, step, flbda, filt):
 
     if flbda[0] < lbda[0] or flbda[-1] > lbda[-2]:
         return None
-    filter_interp = np.interp(lbda, flbda, filter)
+    filter_interp = np.interp(lbda, flbda, filt)
     dphotons = ((filter_interp * lbda * 5.006909561e7)**2) * var
     return np.sum(dphotons * (step**2))
 
@@ -218,3 +266,5 @@ def load_catalogs(path="catalogs", catalog="gunnstryker", ext=".ascii",
             CATALOGS[catalog][num]['spec'] = Spectrum(x, y, fpath=filtersets)
     else:  # use input args
         spectra = glob(path + "/" + catalog + "/*.ext")
+
+
