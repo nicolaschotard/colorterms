@@ -5,13 +5,13 @@ Decam
 
 Decam filter transmission tables:
 
-- DECam_filters.xlsx: DECam_filters.xlsxTable with total
-      throughput for u,g,r,i,z,Y filters (thanks to William Wester
-      (DES Collaboration)). If you want the system throughput without
-      the atmosphere, divide by the "atm" column
+- DECam_filters.xlsx: DECam_filters.xlsxTable with total throughput
+      for u,g,r,i,z,Y filters (thanks to William Wester (DES
+      Collaboration)). If you want the system throughput without the
+      atmosphere, divide by the "atm" column
 
-- DECam_filters_transmission.txt: Filter transmission (area
-      weighted response) from Asahi for u,g,r,i,z,Y and VR (plot)
+- DECam_filters_transmission.txt: Filter transmission (area weighted
+      response) from Asahi for u,g,r,i,z,Y and VR (plot)
 
 These data come from this `web page <http://www.ctio.noao.edu/noao/content/Dark-Energy-Camera-DECam>`_
 
@@ -28,9 +28,9 @@ Megacam
 Megacam 1
 ---------
 
-Original filter set for MegaCam. First column of the files used:
+Original filter set for MegaCam. First column of the files used::
 
-> through airmass 1.3, point course
+  through airmass 1.3, point course
 
 Megacam 2
 ---------
@@ -44,15 +44,15 @@ Info can be found `here <http://www.cfht.hawaii.edu/Instruments/Filters/megaprim
 
 All the (ugriz)'
 
-u' 9302 8/18/2014
-g' 9402 10/21/2014
-r' 9602 9/8/2014
-i' 9703 9/8/2014
-z' 9901 10/23/2014
+- u' 9302 8/18/2014
+- g' 9402 10/21/2014
+- r' 9602 9/8/2014
+- i' 9703 9/8/2014
+- z' 9901 10/23/2014
 
-As said `here <http://www.cfht.hawaii.edu/Instruments/Imaging/Megacam/specsinformation.html#P2>`_
+As said `here <http://www.cfht.hawaii.edu/Instruments/Imaging/Megacam/specsinformation.html#P2>`_::
 
-> Each filter was scanned 17 times by the manufacturer at different places
+  Each filter was scanned 17 times by the manufacturer at different places
 
 These 17 measurements correspond to the 17 columns of the filter data
 files. The average transmission will thus be used. The `(ugriz).dat`
