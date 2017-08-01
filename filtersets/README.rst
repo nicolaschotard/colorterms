@@ -5,12 +5,12 @@ Decam
 
 Decam filter transmission tables:
 
-- ``DECam_filters.xlsx``: DECam_filters.xlsxTable with total
+- DECam_filters.xlsx: DECam_filters.xlsxTable with total
       throughput for u,g,r,i,z,Y filters (thanks to William Wester
       (DES Collaboration)). If you want the system throughput without
       the atmosphere, divide by the "atm" column
 
-- ``DECam_filters_transmission.txt``: Filter transmission (area
+- DECam_filters_transmission.txt: Filter transmission (area
       weighted response) from Asahi for u,g,r,i,z,Y and VR (plot)
 
 These data come from this `web page <http://www.ctio.noao.edu/noao/content/Dark-Energy-Camera-DECam>`_
@@ -50,7 +50,7 @@ r' 9602 9/8/2014
 i' 9703 9/8/2014
 z' 9901 10/23/2014
 
-As said ``here <http://www.cfht.hawaii.edu/Instruments/Imaging/Megacam/specsinformation.html#P2>`_
+As said `here <http://www.cfht.hawaii.edu/Instruments/Imaging/Megacam/specsinformation.html#P2>`_
 
 > Each filter was scanned 17 times by the manufacturer at different places
 
