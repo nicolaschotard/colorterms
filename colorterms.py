@@ -5,7 +5,7 @@ from glob import glob
 import numpy as np
 import yaml
 import pylab as plt
-
+import pyfits
 
 CATALOGS = {}
 
@@ -241,12 +241,12 @@ def integ_photons_variance(lbda, var, step, flbda, filt):
 
 def load_catalogs(path="catalogs", catalog="gunnstryker", ext=".ascii",
                   desc="lbd,flux"):
-
+    filtersets = '/'.join(path.split('/')[:-1] + ['filtersets'])
     if catalog == "gunnstryker":
         # paths
         spectra = sorted(glob(path + "/" + catalog + "/gs_*.ascii"))
         CATALOGS[catalog] = {int(sp.split('_')[1].split('.')[0]):
-                             {'path': sp, 'type': 'unknown',
+                             {'path': sp, 'type': 'unknown', 'name': 'unknown',
                               'lbda': None, 'flux': None, 'spec': None}
                              for sp in spectra}
 
@@ -257,14 +257,25 @@ def load_catalogs(path="catalogs", catalog="gunnstryker", ext=".ascii",
             CATALOGS[catalog][int(gs.split('_')[1].split('.')[0])]['type'] = spectype[1][i]
 
         # data
-        filtersets = '/'.join(path.split('/')[:-1] + ['filtersets'])
         for sp in spectra:
             x, y = np.loadtxt(sp, dtype='float', unpack=True)
             num = int(sp.split('_')[1].split('.')[0])
             CATALOGS[catalog][num]['lbda'] = x
             CATALOGS[catalog][num]['flux'] = y
             CATALOGS[catalog][num]['spec'] = Spectrum(x, y, fpath=filtersets)
-    else:  # use input args
-        spectra = glob(path + "/" + catalog + "/*.ext")
+    elif catalog == 'calspec':
+        # paths
+        spectra = glob(path + "/" + catalog + "/*.fits")
 
+        # create the catalog
+        CATALOGS[catalog] = {int(sp.split('_')[1].split('.')[0]):
+                             {'path': sp, 'type': 'unknown', 'name': 'unknown',
+                              'lbda': None, 'flux': None, 'spec': None}
+                             for sp in spectra}
 
+        # get the data
+        for sp in spectra:
+            spec = pyfits.open(sp)
+            CATALOGS[catalog][num]['lbda'] = x
+            CATALOGS[catalog][num]['flux'] = y
+            CATALOGS[catalog][num]['spec'] = Spectrum(x, y, fpath=filtersets)
