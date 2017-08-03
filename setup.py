@@ -24,7 +24,7 @@ PACKAGES = find_packages()
 # Scripts (in scripts/)
 #SCRIPTS = glob.glob("scripts/*.py")
 
-PACKAGE_DATA = {NAME: ["data/"]}
+PACKAGE_DATA = {NAME: ["data/*/*/*"]}
 
 CLASSIFIERS = ['Development Status :: 3 - Alpha',
                'Intended Audience :: Science/Research',
