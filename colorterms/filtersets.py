@@ -87,7 +87,7 @@ class Filters(object):
     def plot_filters(self):
         """Simple transmission plots."""
         for syst in self.filters:
-            fig = plt.figure(dpi=150)
+            fig = plt.figure()
             ax = fig.add_subplot(111,
                                  xlabel='Wavelenght',
                                  ylabel='Transmission',
