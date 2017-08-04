@@ -4,14 +4,15 @@
 import numpy as np
 import yaml
 import pylab as plt
-from . import utils
+from pkg_resources import resource_filename
+from . import spectools
 
 
 class Filters(object):
 
-    def __init__(self, path_to_filters="filtersets", verbose=True):
+    def __init__(self, verbose=True):
         """Load all available filter sets."""
-        self.path_to_filters = path_to_filters
+        self.path_to_filters = resource_filename('colorterms', 'data/filtersets')
         self.load_filters(verbose=verbose)
         self.ordered = self.order_by_wlength()
 
@@ -53,7 +54,7 @@ class Filters(object):
                 print(" - loading %s" % filt)
             d = np.loadtxt("%s/%s/%s" % (self.path_to_filters, fset,
                                          self.filtersets[fset][filt]), unpack=True)
-            data[filt] = utils.OneSpec(d[0], d[1])
+            data[filt] = spectools.Spectrum(d[0], d[1])
         return data
 
     def _check_filter(self, syst, filt):

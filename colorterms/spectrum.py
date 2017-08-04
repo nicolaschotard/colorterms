@@ -64,9 +64,3 @@ class Spectrum(object):
             return float(outmag), float(magerr)
         else:
             return float(outmag), None
-
-    def magerrfit(self, x0, x0err):
-        """computes the magnitude error coming from salt2 fit
-        (only x0 component is included)"""
-
-        return 2.5 / np.log(10.) * x0err / x0
