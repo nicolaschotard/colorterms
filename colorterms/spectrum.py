@@ -1,11 +1,7 @@
 #!/usr/bin/env python
 
 
-from glob import glob
 import numpy as np
-import yaml
-import pylab as plt
-import pyfits
 from . import utils
 
 

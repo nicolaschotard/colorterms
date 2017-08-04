@@ -6,7 +6,7 @@ import numpy as np
 import pylab as plt
 import pyfits
 from pkg_resources import resource_filename
-catalogs = resource_filename('colorterms', 'data/catalogs/*')
+catalogs = glob(resource_filename('colorterms', 'data/catalogs/*'))
 print catalogs
 
 CATALOGS = {}
