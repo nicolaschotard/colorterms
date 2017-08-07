@@ -1,3 +1,7 @@
+.. image:: https://landscape.io/github/nicolaschotard/colorterms/master/landscape.svg?style=flat-square
+   :target: https://landscape.io/github/nicolaschotard/colorterms/master
+   :alt: Code Health
+
 colorterms
 ==========
 
