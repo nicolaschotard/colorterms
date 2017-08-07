@@ -39,7 +39,7 @@ class Colorterms(object):
     def _pair_filters_for_colors(self, first_filterset, second_filterset):
         """Get filter pairs for color in a given system."""
         pass
-    
+
     def compute_colorterms(first_filterset, second_filterset):
         self.first_filterset = first_filterset
         self.second_filterset = second_filterset

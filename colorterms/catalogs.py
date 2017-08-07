@@ -47,40 +47,69 @@ def load_catalogs():
     catalog_names = get_catalog_list()
     for catalog in catalog_names:
         if catalog == "gunnstryker":
+            print("INFO: Loading catalog '%s'" % catalog)
             catalogs.append(load_gunnstryker_catalog(catalog_names[catalog]))
+        elif catalog == "calspec":
+            print("INFO: Loading catalog '%s'" % catalog)
+            catalogs.extend(load_calspec_catalog(catalog_names[catalog]))
         else:
-            continue
+            print("WARNING: Loader for catalog '%s' isn't implemented yet." % catalog)
     return catalogs
 
 
 def load_gunnstryker_catalog(catpath):
+    """Load the gunnstryker catalog from a catalog path and return a Catalog object."""
+    # Get the list of speptra and their type
     speclist = sorted(glob(catpath + "/gs_*.ascii"))
     spectypes = np.loadtxt(catpath + "/gsspectype.ascii", dtype='str', unpack=True)
     spectypes = {int(gs.split('_')[1].split('.')[0]): spectypes[1][i]
                  for i, gs in enumerate(spectypes[0])}
+
+    # Load each spectrum with its info
     spectra = []
     for sp in speclist:
         x, y = np.loadtxt(sp, dtype='float', unpack=True)
-        name = int(sp.split('_')[1].split('.')[0])
-        object_type = spectypes[name] if name in spectypes else ""
-        spectra.append(spectools.Spectrum(x, y, object_name=name, object_type=object_type))
+        object_name = int(sp.split('_')[1].split('.')[0])
+        object_type = spectypes[object_name] if object_name in spectypes else ""
+        spectra.append(spectools.Spectrum(x, y, object_name=object_name, object_type=object_type))
+
     # Order them by name/number
     sort = np.argsort([spec.object_name for spec in spectra])
     return Catalog("gunnstryker", np.array(spectra)[sort], catpath=catpath)
 
 
 def load_calspec_catalog(catpath):
-    spectra = glob(path + "/" + catalog + "/*.fits")
-    
-    # create the catalog
-    CATALOGS[catalog] = {int(sp.split('_')[1].split('.')[0]):
-                         {'path': sp, 'type': 'unknown', 'name': 'unknown',
-                          'lbda': None, 'flux': None, 'spec': None}
-                         for sp in spectra}
+    """Load the calspec catalog from a catalog path and return a Catalog object.
 
-    # get the data
-    for sp in spectra:
-        spec = pyfits.open(sp)
-        CATALOGS[catalog][num]['lbda'] = x
-        CATALOGS[catalog][num]['flux'] = y
-        CATALOGS[catalog][num]['spec'] = spectools.Spectrum(x, y)
+    Five different catalogs will be return
+    """
+    # Load the data info txt file and clean it a little
+    dat = np.loadtxt(catpath + "/data_table.txt", dtype='str', delimiter='&', unpack=True)
+    dat = np.array([np.array([cell.strip() for cell in col]) for col in dat])
+
+    # Prepare for the ctalog loading
+    datadict = {}
+    for i, name in enumerate(dat[0]):
+        bestofall = [v for v in [dat[6][i], dat[7][i], dat[8][i]] if v != ''][0]
+        datadict[name] = {'name': name,
+                          'type': dat[1][i],
+                          'prefix': dat[4][i],
+                          'model': dat[5][i],
+                          'stisnic': dat[6][i],
+                          'fosoke': dat[7][i],
+                          'iueoke': dat[8][i],
+                          'bestofall': bestofall}
+
+    # Load catalogs
+    catalogs = []
+    for suffix in ["model", "stisnic", "fosoke", "iueoke", "bestofall"]:
+        spectra = []
+        for target in datadict:
+            locd = datadict[target]
+            if locd[suffix] == '':
+                continue
+            spec = pyfits.open(catpath + "/%s%s.fits" % (locd["prefix"], locd[suffix]))[1]
+            spectra.append(spectools.Spectrum(spec.data.WAVELENGTH, spec.data.FLUX,
+                                              object_name=locd['name'], object_type=locd['type']))
+        catalogs.append(Catalog("calspec_%s" % suffix, np.array(spectra), catpath=catpath))
+    return catalogs
