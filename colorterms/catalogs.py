@@ -81,7 +81,12 @@ def load_gunnstryker_catalog(catpath):
 def load_calspec_catalog(catpath):
     """Load the calspec catalog from a catalog path and return a Catalog object.
 
-    Five different catalogs will be return
+    Five different catalogs will be return, respectively containing:
+    - 'model': model spectra
+    - 'stisnic': stis/nicmos data -> best quality data
+    - 'fosoke': FOS+Oke data     -> second best quality data
+    - 'iueoke': IUE+Oke data     - > third best quality data
+    - 'bestofall': Best sptrum for each object, following the previous order
     """
     # Load the data info txt file and clean it a little
     dat = np.loadtxt(catpath + "/data_table.txt", dtype='str', delimiter='&', unpack=True)
@@ -113,3 +118,8 @@ def load_calspec_catalog(catpath):
                                               object_name=locd['name'], object_type=locd['type']))
         catalogs.append(Catalog("calspec_%s" % suffix, np.array(spectra), catpath=catpath))
     return catalogs
+
+
+def load_pickles1998_catalog(catpath):
+    """Load the pickles1998 catalog from a catalog path and return a Catalog object."""
+    pass
