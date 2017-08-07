@@ -57,7 +57,7 @@ class Filters(object):
             data[filt] = spectools.Spectrum(d[0], d[1])
         return data
 
-    def _check_filter(self, syst, filt):
+    def check_filter(self, syst, filt):
         """
         Make sure that a given filter is a OneSpec object or is in the list
         of already defined filters.

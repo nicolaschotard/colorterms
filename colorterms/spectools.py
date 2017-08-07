@@ -16,18 +16,24 @@ class Spectrum(object):
     object_type: Type of the object (optionnal)
     """
 
-    def __init__(self, lbda, flux, var=None, object_name="", object_type=""):
+    def __init__(self, lbda, flux, **kwargs):
         """
         Create a Spectrum instance with wavelength (lbda), flux (flux) and variance (var).
+
+        Available kwargs are:
+        - var: Variance associated to the spectrum flux
+        - object_name: Name of the objet loaded
+        - object_type: Type of the object loaded
         """
+        var = kwargs.get('var', None)
         self.lbda = np.array(lbda, dtype='float')
         self.flux = np.array(flux, dtype='float')
         self.var = None if var is None else np.array(var, dtype='float')
         self.steps = self.lbda[1:] - self.lbda[:-1]
         self.constant_step = len(set(self.steps)) == 1
         self.step = None if not self.constant_step else self.steps[0]
-        self.object_name = object_name
-        self.object_type = object_type
+        self.object_name = kwargs.get("object_name", None)
+        self.object_type = kwargs.get("object_type", None)
 
     def mean_wlength(self):
         """Return effective mean wavelength."""
@@ -64,7 +70,7 @@ class Magnitude(object):
         """
 
         # check filter
-        filto = self.filters._check_filter(syst, filt)
+        filto = self.filters.check_filter(syst, filt)
 
         photons = integ_photons(self.spectrum.lbda, self.spectrum.flux, step, filto.lbda,
                                 filto.flux)
@@ -90,13 +96,13 @@ class Magnitude(object):
         else:
             return float(outmag), None
 
-def integ_photons(lbda, flux, step, flbda, filter):
+def integ_photons(lbda, flux, step, flbda, filt):
 
-#    if flbda[0] < lbda[0] or flbda[-1] > lbda[-2]:
-#        print('Error: %f<%f or %f>%f'%\
-#              (flbda[0], lbda[0], flbda[-1], lbda[-2]))
-#        return None
-    filter_interp = np.interp(lbda, flbda, filter)
+    # if flbda[0] < lbda[0] or flbda[-1] > lbda[-2]:
+    #     print('Error: %f<%f or %f>%f'%\
+    #           (flbda[0], lbda[0], flbda[-1], lbda[-2]))
+    #     return None
+    filter_interp = np.interp(lbda, flbda, filt)
     dphotons = (filter_interp * flux) * lbda * 5.006909561e7
     if step is None:
         return np.trapz(dphotons, lbda)
