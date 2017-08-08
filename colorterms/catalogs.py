@@ -122,4 +122,7 @@ def load_calspec_catalog(catpath):
 
 def load_pickles1998_catalog(catpath):
     """Load the pickles1998 catalog from a catalog path and return a Catalog object."""
-    pass
+    speclist, typelist = np.loadtxt(catpath + '/spectra_list.txt', dtype='str', unpack=True)
+    for i, spec in enumerate(speclist):
+        d = np.loadtxt(spec, dtype='str')
+        print(i+1, '/', len(speclist))
