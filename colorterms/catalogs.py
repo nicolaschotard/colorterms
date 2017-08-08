@@ -3,6 +3,7 @@
 
 from glob import glob
 import numpy as np
+import pylab as plt
 import pyfits
 from pkg_resources import resource_filename
 from . import spectools
@@ -29,10 +30,25 @@ class Catalog(object):
 
     def plot_catalog(self):
         """Plot the catalog."""
-        pass
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        ax.set_xlabel('Wavelength')
+        ax.set_ylabel('Flux')
+        ax.set_title(self.name + ', %i spectra' % self.num_spectra)
+        for spec in self.spectra:
+            ax.plot(spec.lbda, spec.flux)
+        plt.show()
 
     def info(self):
-        print("toto")
+        print("Catalog name:", self.name)
+        print("Number of spectra:", self.num_spectra)
+        print("From:", self.catpath)
+        print("Has same wavelength range:", self.same_range)
+        if self.same_range:
+            print("Wavelength info:")
+            print(" - lower boundary:", self.min_wlength)
+            print(" - higher boundary:", self.max_wlength)
+            print(" - average value:", self.mean_wlength)
 
 
 def get_catalog_list():
@@ -47,14 +63,17 @@ def load_catalogs():
     catalog_names = get_catalog_list()
     for catalog in catalog_names:
         if catalog == "gunnstryker":
-            print("INFO: Loading catalog '%s'" % catalog)
+            print("INFO: Loading the '%s' catalog" % catalog)
             catalogs.append(load_gunnstryker_catalog(catalog_names[catalog]))
         elif catalog == "calspec":
-            print("INFO: Loading catalog '%s'" % catalog)
+            print("INFO: Loading the '%s' catalog" % catalog)
             catalogs.extend(load_calspec_catalog(catalog_names[catalog]))
+        elif catalog == "pickles1998":
+            print("INFO: Loading the '%s' catalog" % catalog)
+            catalogs.extend(load_pickles1998_catalog(catalog_names[catalog]))
         else:
             print("WARNING: Loader for catalog '%s' isn't implemented yet." % catalog)
-    return catalogs
+    return {cat.name: cat for cat in catalogs}
 
 
 def load_gunnstryker_catalog(catpath):
@@ -95,6 +114,9 @@ def load_calspec_catalog(catpath):
     # Prepare for the ctalog loading
     datadict = {}
     for i, name in enumerate(dat[0]):
+        # do not load the SUN spectrum
+        if name == "SUN":
+            continue
         bestofall = [v for v in [dat[6][i], dat[7][i], dat[8][i]] if v != ''][0]
         datadict[name] = {'name': name,
                           'type': dat[1][i],
@@ -110,7 +132,7 @@ def load_calspec_catalog(catpath):
     for suffix in ["model", "stisnic", "fosoke", "iueoke", "bestofall"]:
         spectra = []
         for target in datadict:
-            locd = datadict[target]
+            locd = datadict[target]  # shortcut
             if locd[suffix] == '':
                 continue
             spec = pyfits.open(catpath + "/%s%s.fits" % (locd["prefix"], locd[suffix]))[1]
@@ -122,7 +144,15 @@ def load_calspec_catalog(catpath):
 
 def load_pickles1998_catalog(catpath):
     """Load the pickles1998 catalog from a catalog path and return a Catalog object."""
+    # Get the list of spectrum and the corresponding type
     speclist, typelist = np.loadtxt(catpath + '/spectra_list.txt', dtype='str', unpack=True)
+    # Loop over the spectra list to build the catalog
+    spectra_UVILIB, spectra_UVKLIB = [], []
     for i, spec in enumerate(speclist):
-        d = np.loadtxt(spec, dtype='str')
-        print(i+1, '/', len(speclist))
+        data = np.loadtxt(catpath + "/" + spec, unpack=True)  # 0: wlgth, 1: flux
+        spectra = spectra_UVKLIB if spec.startswith('uk') else spectra_UVILIB
+        spectra.append(spectools.Spectrum(data[0], data[1],
+                                          object_name=spec.strip('.dat'),
+                                          object_type=typelist[i]))
+    return [Catalog("pickles1998_UVILIB", np.array(spectra_UVILIB), catpath=catpath),
+            Catalog("pickles1998_UVKLIB", np.array(spectra_UVKLIB), catpath=catpath)]
