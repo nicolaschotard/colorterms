@@ -30,15 +30,20 @@ class Colorterms(object):
                     cmag[syst][filt] = np.array([mag.mag(syst=syst, filt=filt)[0]
                                                  for mag in self.mag_catalogs[cat]])
 
-    def _pair_filters_between_systems(self, first_filterset, second_filterset):
+    def pair_filters_between_systems(self, first_filterset, second_filterset):
         """Pair filters from one system to an other."""
         # mean_wlength should be close enough. Diff < 100A ?
-        # range should also be close enough.
-        filters = self.filters.filters
-        for filt in filters[first_filterset]:
-            pass
+        # range should also be close enough
+        filters_1 = self.filters.filters[first_filterset]
+        filters_2 = self.filters.filters[second_filterset]
+        filters_1_list = self.filters.ordered[first_filterset]
+        filters_2_list = self.filters.ordered[second_filterset]
+        for filt_1 in filters_1_list:
+            means = np.array([filters_2[filt_2].mean_wlength() for filt_2 in filters_2_list])
+            arg_min = np.argsort(filters_1[filt_1].mean_wlength() - means)
+            print(first_filterset, filt_1, filters_2_list[arg_min])
 
-    def _pair_filters_for_colors(self, first_filterset, second_filterset):
+    def pair_filters_for_colors(self, first_filterset, second_filterset):
         """Get filter pairs for color in a given system."""
         pass
 

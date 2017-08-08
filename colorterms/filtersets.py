@@ -57,7 +57,7 @@ class Filters(object):
             # convert wavelength to angstrom
             wunit = float(self.filtersets[fset]['units']['wavelength'])
             data[filt] = spectools.Spectrum(d[0] * int(wunit / 1e-10),
-                                            d[1] * int(1 if np.mean(d[1]) > 1 else 100))
+                                            d[1] / int(1 if np.mean(d[1]) < 1 else 100))
         return data
 
     def check_filter(self, syst, filt):
