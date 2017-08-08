@@ -47,6 +47,15 @@ class Spectrum(object):
         """Return higher wavelength boundary."""
         return np.max(self.lbda)
 
+    def fwhm_wlength(self):
+        """
+        Return the Full-Width Half-Maximum.
+        
+        Can be used as a proxy of the width of a bandpass filter.
+        """
+        wlength_range = self.lbda[self.flux > max(self.flux) / 2]
+        return wlength_range[-1] - wlength_range[0]
+
 
 class Magnitude(object):
     def __init__(self, spectrum, filters):

@@ -8,25 +8,27 @@ from . import spectools
 
 class Colorterms(object):
 
-    def __init__(self, catalogs, filters):
+    def __init__(self, catalogs, filters, used_catalogs='all'):
         """Initialization."""
         # Initiale inputs
-        self.catalogs = [catalogs] if not isinstance(catalogs, list) else catalogs
+        self.catalogs = catalogs
         self.filters = filters
+        self.used_catalogs = catalogs.keys() if used_catalogs == 'all' else used_catalogs
 
         # Create mags object for all spectra of all catalogs
-        self.mag_catalogs = [[spectools.Magnitude(spec, filters) for spec in cat.spectra]
-                             for cat in self.catalogs]
+        self.mag_catalogs = {cat: [spectools.Magnitude(spec, filters)
+                                   for spec in self.catalogs[cat].spectra]
+                             for cat in self.catalogs}
 
         # Compute magnitudes for all spectra of all catalogs, and for all systems and filters
         self.magnitudes = {}
-        for i, mag_catalog in enumerate(self.mag_catalogs):
-            cmag = self.magnitudes[self.catalogs[i].name] = {}
+        for cat in self.mag_catalogs:
+            cmag = self.magnitudes[cat] = {}
             for syst in filters.filters:
                 cmag[syst] = {}
                 for filt in filters.filters[syst]:
                     cmag[syst][filt] = np.array([mag.mag(syst=syst, filt=filt)[0]
-                                                 for mag in mag_catalog])
+                                                 for mag in self.mag_catalogs[cat]])
 
     def _pair_filters_between_systems(self, first_filterset, second_filterset):
         """Pair filters from one system to an other."""

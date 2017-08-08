@@ -4,4 +4,4 @@ megacam3: {g: g.dat, i: i.dat, r: r.dat, u: u.dat, z: z.dat}
 sdss: {g: g.dat, i: i.dat, r: r.dat, u: u.dat, z: z.dat}
 decam: {g: g.dat, i: i.dat, r: r.dat, u: u.dat, z: z.dat, Y: Y.dat}
 hsc: {g: HSC-g.dat, i: HSC-i.dat, r: HSC-r.dat, Y: HSC-Y.dat, z: HSC-z.dat}
-pan-starrs: {g: g.dat, i: i.dat, r: r.dat, w: w.dat, y: y.dat, z: z.dat}
+pan-starrs: {g: g.dat, i: i.dat, r: r.dat, y: y.dat, z: z.dat}
