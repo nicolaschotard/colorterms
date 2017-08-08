@@ -49,12 +49,15 @@ class Filters(object):
         if verbose:
             print("INFO: Loading %s filter set" % fset)
         data = {}
-        for filt in self.filtersets[fset]:
+        for filt in self.filtersets[fset]['filters']:
             if verbose:
                 print(" - loading %s" % filt)
             d = np.loadtxt("%s/%s/%s" % (self.path_to_filters, fset,
-                                         self.filtersets[fset][filt]), unpack=True)
-            data[filt] = spectools.Spectrum(d[0], d[1])
+                                         self.filtersets[fset]['filters'][filt]), unpack=True)
+            # convert wavelength to angstrom
+            wunit = float(self.filtersets[fset]['units']['wavelength'])
+            data[filt] = spectools.Spectrum(d[0] * int(wunit / 1e-10),
+                                            d[1] * int(1 if np.mean(d[1]) > 1 else 100))
         return data
 
     def check_filter(self, syst, filt):

@@ -1,7 +1,57 @@
-megacam: {g: g.ascii, i: i.ascii, r: r.ascii, u: u.ascii, z: z.ascii}
-megacam2: {g: g.ascii, i2: i2.ascii, r: r.ascii, u: u.ascii, z: z.ascii}
-megacam3: {g: g.dat, i: i.dat, r: r.dat, u: u.dat, z: z.dat}
-sdss: {g: g.dat, i: i.dat, r: r.dat, u: u.dat, z: z.dat}
-decam: {g: g.dat, i: i.dat, r: r.dat, u: u.dat, z: z.dat, Y: Y.dat}
-hsc: {g: HSC-g.dat, i: HSC-i.dat, r: HSC-r.dat, Y: HSC-Y.dat, z: HSC-z.dat}
-pan-starrs: {g: g.dat, i: i.dat, r: r.dat, y: y.dat, z: z.dat}
+megacam: {filters: {g: g.ascii,
+                   i: i.ascii,
+                   r: r.ascii,
+                   u: u.ascii,
+                   z: z.ascii},
+          units: {wavelength: 1e-10,
+                  flux: None}
+         }
+megacam2: {filters: {g: g.ascii,
+                     i2: i2.ascii,
+                     r: r.ascii,
+                     u: u.ascii,
+                     z: z.ascii},
+           units: {wavelength: 1e-10,
+                   flux: None}
+          }
+megacam3: {filters: {g: g.dat,
+                     i: i.dat,
+                     r: r.dat,
+                     u: u.dat,
+                     z: z.dat},
+           units: {wavelength: 1e-9,
+                   flux: None}
+          }
+sdss: {filters: {g: g.dat,
+                 i: i.dat,
+                 r: r.dat,
+                 u: u.dat,
+                 z: z.dat},
+       units: {wavelength: 1e-10,
+               flux: None}
+      }
+decam: {filters: {g: g.dat,
+                  i: i.dat,
+                  r: r.dat,
+                  u: u.dat,
+                  z: z.dat,
+                  Y: Y.dat},
+        units: {wavelength: 1e-9,
+                flux: None}
+       }
+hsc: {filters: {g: HSC-g.dat,
+                i: HSC-i.dat,
+                r: HSC-r.dat,
+                Y: HSC-Y.dat,
+                z: HSC-z.dat},
+      units: {wavelength: 1e-9,
+              flux: None}
+      }
+pan-starrs: {filters: {g: g.dat,
+                       i: i.dat,
+                       r: r.dat,
+                       y: y.dat,
+                       z: z.dat},
+             units: {wavelength: 1e-9,
+                     flux: None}
+             }
