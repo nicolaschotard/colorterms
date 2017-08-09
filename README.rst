@@ -1,12 +1,14 @@
-.. image:: https://landscape.io/github/nicolaschotard/colorterms/master/landscape.svg?style=flat-square
+.. image:: https://landscape.io/github/nicolaschotard/colorterms/master/landscape.svg?style=flat
    :target: https://landscape.io/github/nicolaschotard/colorterms/master
    :alt: Code Health
 
 colorterms
 ==========
 
+Compute color terms that allows to go from one filter system to an other.
+
 References
-----------
+==========
 
 Here are some references about filters and colorterms previously calculated:
 
