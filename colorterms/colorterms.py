@@ -15,41 +15,93 @@ class Colorterms(object):
         self.filters = filters
         self.used_catalogs = catalogs.keys() if used_catalogs == 'all' else used_catalogs
 
-        # Create mags object for all spectra of all catalogs
-        self.mag_catalogs = {cat: [spectools.Magnitude(spec, filters)
-                                   for spec in self.catalogs[cat].spectra]
-                             for cat in self.catalogs}
-
-        # Compute magnitudes for all spectra of all catalogs, and for all systems and filters
+        # Initialization of variables
+        self.mag_catalogs = {}
         self.magnitudes = {}
-        for cat in self.mag_catalogs:
-            cmag = self.magnitudes[cat] = {}
-            for syst in filters.filters:
+        self.colorterms = {}
+        self.pairs = {}
+
+    def _compute_magnitudes(self, first_fset, second_fset, catalog_list=None):
+        """Compute the magnitudes for the two given system.
+
+        If the 'catalog_list' is not given, magnitudes will be computed for all available catalogs.
+        Magnitudes are stored in self.magnitudes.
+        """
+        # Create mags object for all spectra of all catalogs
+        catalogs = catalog_list if catalog_list is not None else self.catalogs.keys()
+        for cat in catalogs:
+            if cat in self.mag_catalogs:
+                continue
+            else:
+                self.mag_catalogs[cat] = [spectools.Magnitude(spec, self.filters)
+                                          for spec in self.catalogs[cat].spectra]
+
+        # Compute magnitudes for all spectra for the input list of catalogs
+        # and for all filters of the two input systems
+        for cat in catalogs:
+            if cat not in self.magnitudes.keys():
+                cmag = self.magnitudes[cat] = {}
+            else:
+                cmag = self.magnitudes[cat]
+            for syst in [first_fset, second_fset]:
+                if syst in cmag:
+                    continue
                 cmag[syst] = {}
-                for filt in filters.filters[syst]:
+                for filt in self.filters.filters[syst]:
                     cmag[syst][filt] = np.array([mag.mag(syst=syst, filt=filt)[0]
                                                  for mag in self.mag_catalogs[cat]])
+                        
+    def _make_pairing(self, first_fset, second_fset):
+        """
+        Pair filters from one system to an other.
 
-    def pair_filters_between_systems(self, first_filterset, second_filterset):
-        """Pair filters from one system to an other."""
-        # mean_wlength should be close enough. Diff < 100A ?
-        # range should also be close enough
-        filters_1 = self.filters.filters[first_filterset]
-        filters_2 = self.filters.filters[second_filterset]
-        filters_1_list = self.filters.ordered[first_filterset]
-        filters_2_list = self.filters.ordered[second_filterset]
-        for filt_1 in filters_1_list:
-            means = np.array([filters_2[filt_2].mean_wlength() for filt_2 in filters_2_list])
-            arg_min = np.argsort(filters_1[filt_1].mean_wlength() - means)
-            print(first_filterset, filt_1, filters_2_list[arg_min])
+        The mean wavelength of two filters should be close enough. Diff < 100A ?
+        Their range should also of the same order.
+        """
+        if second_fset not in self.pairs:
+            self.pairs[second_fset] = {}
+        if first_fset not in self.pairs[second_fset]:
+            results = {}
+            for filt_2 in self.filters.ordered[first_fset]:
+                # Mean wavelength for each filter of the first set
+                means = np.array([self.filters.filters[first_fset][filt_1].mean_wlength()
+                                  for filt_1 in self.filters.ordered[first_fset]])
+                # Wavelength different of the current filter to all filters of the first set
+                diff = np.abs(self.filters.filters[first_fset][filt_2].mean_wlength() - means)
+                # Argument of the closest one
+                amin = np.argmin(diff)
+                # Closest one
+                filt = self.filters.ordered[first_fset][amin]
+                # Colors corresponding to this closest filter
+                ac1 = amin - 1 if amin - 1 >= 0 else amin + 1
+                ac2 = amin + 1 if amin + 1 < len(self.filters.filters[first_fset]) else amin - 1
+                colors = set([self.filters.ordered[first_fset][ac1],
+                              self.filters.ordered[first_fset][ac2]])
+                # Save the results
+                results[filt_2] = {'filter': filt, 'colors': list(colors)}
+            self.pairs[second_fset][first_fset] = results
 
-    def pair_filters_for_colors(self, first_filterset, second_filterset):
-        """Get filter pairs for color in a given system."""
-        pass
+    def compute_colorterms(self, first_fset, second_fset):
+        """How to go from the first filterset to the second one.
 
-    def compute_colorterms(first_filterset, second_filterset):
-        self.first_filterset = first_filterset
-        self.second_filterset = second_filterset
+        Transformations are of the following types:
+        s1(f) = s2(f') + a * [s2(f') - s2(f'')]
 
-    def plot_c_vs_magdiff(first_filterset, second_filterset):
+        Where s1(f) and s2(f') must be as cole as possible from each other in term of mean
+        wavelength and wavelength range. s2(f') and s2(f'') will be syde by syde filters.
+
+        e.g.: SDSS(g) = MEGACAM(g) + a * [MEGACAM(g) - MEGACAM(r)]
+        """
+        self._make_pairing(first_fset, second_fset)
+        self._compute_magnitudes(first_fset, second_fset)
+        print("INFO: Computing colorterms to go from %s to %s" % (first_fset, second_fset))
+        for filt in self.pairs[second_fset][first_fset]:
+            localdic = self.pairs[second_fset][first_fset][filt]
+            print(" - fitting: %s(%s) - %s(%s) = a_%s * [%s(%s) - %s(%s)] + b_%s" %
+                  (second_fset, filt, first_fset, localdic['filter'], filt, first_fset,
+                   localdic['filter'], first_fset, localdic['colors'][0], filt))
+            a, b = 1, 2
+            print("   -> a = %.3f ; b = %.3f" % (a, b))
+
+    def plot_c_vs_magdiff(first_fset, second_fset):
         pass
