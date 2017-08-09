@@ -8,12 +8,11 @@ from . import spectools
 
 class Colorterms(object):
 
-    def __init__(self, catalogs, filters, used_catalogs='all'):
+    def __init__(self, catalogs, filters):
         """Initialization."""
         # Initiale inputs
         self.catalogs = catalogs
         self.filters = filters
-        self.used_catalogs = catalogs.keys() if used_catalogs == 'all' else used_catalogs
 
         # Initialization of variables
         self.mag_catalogs = {}
@@ -75,8 +74,9 @@ class Colorterms(object):
                 # Colors corresponding to this closest filter
                 ac1 = amin - 1 if amin - 1 >= 0 else amin + 1
                 ac2 = amin + 1 if amin + 1 < len(self.filters.filters[first_fset]) else amin - 1
-                colors = set([self.filters.ordered[first_fset][ac1],
-                              self.filters.ordered[first_fset][ac2]])
+                colors = [self.filters.ordered[first_fset][ac2],
+                          self.filters.ordered[first_fset][ac1]]
+                colors = [colors[0]] if len(set(colors)) == 1 else colors
                 # Save the results
                 results[filt_2] = {'filter': filt, 'colors': list(colors)}
             self.pairs[second_fset][first_fset] = results
@@ -103,5 +103,27 @@ class Colorterms(object):
             a, b = 1, 2
             print("   -> a = %.3f ; b = %.3f" % (a, b))
 
-    def plot_c_vs_magdiff(first_fset, second_fset):
-        pass
+    def plot_magdiff_vs_c(self, first_fset, second_fset, catalogs=None):
+
+        catalogs = self.catalogs.keys() if catalogs is None else catalogs
+
+        self._make_pairing(first_fset, second_fset)
+        self._compute_magnitudes(first_fset, second_fset)
+        for filt in self.pairs[second_fset][first_fset]:
+            fig = plt.figure()
+            ax = fig.add_subplot(111)
+            localdic = self.pairs[second_fset][first_fset][filt]
+            ax.set_xlabel("%s(%s) - %s(%s)" %
+                          (first_fset, localdic['filter'], first_fset, localdic['colors'][0]))
+            ax.set_ylabel("%s(%s) - %s(%s)" %
+                          (second_fset, filt, first_fset, localdic['filter']))
+            ax.set_title("%s, %s filter" %
+                         (second_fset, filt))
+            for catalog in catalogs:
+                x = self.magnitudes[catalog][second_fset][filt] - \
+                    self.magnitudes[catalog][first_fset][localdic['filter']]
+                y = self.magnitudes[catalog][first_fset][localdic['filter']] - \
+                    self.magnitudes[catalog][first_fset][localdic['colors'][0]]
+                ax.plot(x, y, 'o', label='%s (%i)' % (catalog, len(x)))
+            ax.legend(loc='best')
+        plt.show()
