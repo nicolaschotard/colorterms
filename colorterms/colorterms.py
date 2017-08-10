@@ -72,14 +72,18 @@ class Colorterms(object):
                 amin = np.argmin(diff)
                 # Closest one
                 filt = self.filters.ordered[first_fset][amin]
+                results[filt_2] = {'filter': filt}
                 # Colors corresponding to this closest filter
-                ac1 = amin - 1 if amin - 1 >= 0 else amin + 1
-                ac2 = amin + 1 if amin + 1 < len(self.filters.filters[first_fset]) else amin - 1
-                colors = [self.filters.ordered[first_fset][ac2],
-                          self.filters.ordered[first_fset][ac1]]
-                colors = [colors[0]] if len(set(colors)) == 1 else colors
-                # Save the results
-                results[filt_2] = {'filter': filt, 'colors': list(colors)}
+                #ac1 = amin - 1 if amin - 1 >= 0 else amin + 1
+                #ac2 = amin + 1 if amin + 1 < len(self.filters.filters[first_fset]) else amin - 1
+                #colors = [self.filters.ordered[first_fset][ac2],
+                #          self.filters.ordered[first_fset][ac1]]
+                #colors = [colors[0]] if len(set(colors)) == 1 else colors
+                filts = self.filters.ordered[first_fset]
+                colors = np.concatenate([((filt, (filts + filts[:1])[i - 1]),
+                                          (filt, (filts + filts[:1])[i + 1]))
+                                         for i, filt in enumerate(filts)])[1:-1]
+                results[filt_2]['colors'] = colors
             self.pairs[second_fset][first_fset] = results
 
     def compute_colorterms(self, first_fset, second_fset, catalogs=None):
@@ -105,14 +109,15 @@ class Colorterms(object):
                    localdic['filter'], first_fset, localdic['colors'][0]))
             m0 = self.magnitudes[catalog][second_fset][filt]
             m1 = self.magnitudes[catalog][first_fset][localdic['filter']]
-            c1 = self.magnitudes[catalog][first_fset][localdic['filter']] - \
-                 self.magnitudes[catalog][first_fset][localdic['colors'][0]]
-            colfit = Colorfit(m0 - m1, c1,
-                              xlabel="%s(%s) - %s(%s)" % (first_fset, localdic['filter'],
-                                                          first_fset, localdic['colors'][0]),
-                              ylabel="%s(%s) - %s(%s)" % (second_fset, filt, first_fset,
-                                                          localdic['filter']),
-                              title="%s, %s filter" % (second_fset, filt))
+            for color in localdic['colors']:
+                col = self.magnitudes[catalog][first_fset][color[0]] - \
+                      self.magnitudes[catalog][first_fset][color[1]]
+                colfit = Colorfit(m0 - m1, col,
+                                  xlabel="%s(%s) - %s(%s)" % (first_fset, localdic['filter'],
+                                                              color[0], color[1]),
+                                  ylabel="%s(%s) - %s(%s)" % (second_fset, filt, first_fset,
+                                                              localdic['filter']),
+                                  title="%s, %s filter" % (second_fset, filt))
             colfit.polyfits()
             colfit.plots()
 
