@@ -74,12 +74,7 @@ class Colorterms(object):
                 filt = self.filters.ordered[first_fset][amin]
                 results[filt_2] = {'filter': filt}
                 # Colors corresponding to this closest filter
-                #ac1 = amin - 1 if amin - 1 >= 0 else amin + 1
-                #ac2 = amin + 1 if amin + 1 < len(self.filters.filters[first_fset]) else amin - 1
-                #colors = [self.filters.ordered[first_fset][ac2],
-                #          self.filters.ordered[first_fset][ac1]]
-                #colors = [colors[0]] if len(set(colors)) == 1 else colors
-                filts = self.filters.ordered[first_fset]
+                filts = list(self.filters.ordered[first_fset])
                 colors = np.concatenate([((filt, (filts + filts[:1])[i - 1]),
                                           (filt, (filts + filts[:1])[i + 1]))
                                          for i, filt in enumerate(filts)])[1:-1]
@@ -98,28 +93,33 @@ class Colorterms(object):
         e.g.: SDSS(g) = MEGACAM(g) + a * [MEGACAM(g) - MEGACAM(r)]
         """
         catalogs = self.catalogs.keys() if catalogs is None else catalogs
-        catalog = 'gunnstryker'
         self._make_pairing(first_fset, second_fset)
         self._compute_magnitudes(first_fset, second_fset)
         print("INFO: Computing colorterms to go from %s to %s" % (first_fset, second_fset))
         for filt in self.pairs[second_fset][first_fset]:
             localdic = self.pairs[second_fset][first_fset][filt]
-            print(" - fitting: %s(%s) - %s(%s) = f(%s(%s) - %s(%s))" %
-                  (second_fset, filt, first_fset, localdic['filter'], first_fset,
-                   localdic['filter'], first_fset, localdic['colors'][0]))
-            m0 = self.magnitudes[catalog][second_fset][filt]
-            m1 = self.magnitudes[catalog][first_fset][localdic['filter']]
+            m0 = np.concatenate([self.magnitudes[catalog][second_fset][filt]
+                                 for catalog in catalogs])
+            m1 = np.concatenate([self.magnitudes[catalog][first_fset][localdic['filter']]
+                                 for catalog in catalogs])
             for color in localdic['colors']:
-                col = self.magnitudes[catalog][first_fset][color[0]] - \
-                      self.magnitudes[catalog][first_fset][color[1]]
+                print(" FITTING: %s(%s) - %s(%s) = f(%s(%s) - %s(%s))" %
+                      (second_fset, filt, first_fset, localdic['filter'],
+                       first_fset, color[0], first_fset, color[1]))
+                col = np.concatenate([self.magnitudes[catalog][first_fset][color[0]] - \
+                                      self.magnitudes[catalog][first_fset][color[1]]
+                                      for catalog in catalogs])
                 colfit = Colorfit(m0 - m1, col,
-                                  xlabel="%s(%s) - %s(%s)" % (first_fset, localdic['filter'],
-                                                              color[0], color[1]),
+                                  xlabel="%s(%s) - %s(%s)" % (first_fset, color[0],
+                                                              first_fset, color[1]),
                                   ylabel="%s(%s) - %s(%s)" % (second_fset, filt, first_fset,
                                                               localdic['filter']),
                                   title="%s, %s filter" % (second_fset, filt))
-            colfit.polyfits()
-            colfit.plots()
+                colfit.polyfits()
+                colfit.plots()
+                for order in colfit.polyfits_outputs:
+                    print("Order =", order, colfit.polyfits_outputs[order]['params'])
+                
 
     def plot_magdiff_vs_c(self, first_fset, second_fset, catalogs=None):
         """Magnitude difference as a function color."""
@@ -158,9 +158,10 @@ class Colorfit(object):
         ylabel: Label of the `magdiff` argument for plot purpose
         title: A title for the figure
         """
-
-        self.magdiff = magdiff
-        self.color = color
+        # first make sure to remove all possible inf of None values
+        mask = np.isfinite(magdiff) & np.isfinite(color)
+        self.magdiff = magdiff[mask]
+        self.color = color[mask]
         self.kwargs = kwargs
         self.params = {}
         self.polyfits_outputs = {}
@@ -186,7 +187,7 @@ class Colorfit(object):
             output = self.polyfits_outputs[order] = {}
             output['params'] = polyfit(self.color, self.magdiff, order)
             output['ymodel'] = polyval(output["params"], self.color)
-            output['yresiduals'] = self.magdiff - polyval(output["params"], self.color)
+            output['yresiduals'] = self.magdiff - output['ymodel']
             output['yresiduals_mean'] = np.mean(output['yresiduals'])
             output['yresiduals_std'] = np.std(output['yresiduals'])
 
@@ -204,6 +205,7 @@ class Colorfit(object):
         for order in self.polyfits_outputs:
             xsorted = np.linspace(min(self.color), max(self.color), 200)
             ysorted = polyval(self.polyfits_outputs[order]["params"], xsorted)
-            ax.plot(xsorted, ysorted, label="order=%i" % order)
+            ax.plot(xsorted, ysorted, label="order=%i, std=%.3f" %
+                    (order, self.polyfits_outputs[order]["yresiduals_std"]))
         ax.legend(loc='best')
         plt.show()    
