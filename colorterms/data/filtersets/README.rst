@@ -17,10 +17,12 @@ These data come from this `web page <http://www.ctio.noao.edu/noao/content/Dark-
 
 HSC
 ===
+_
+- `filters and wide field corrector transmissions <https://www.naoj.org/Projects/HSC/forobservers.html>`
+- `HSC CCDs' Quantum Efficiency <https://www.naoj.org/Observing/Instruments/HSC/ccd.html>`
+- `Subaru Primary mirror reflectivity <https://www.subarutelescope.org/Observing/Telescope/Parameters/Reflectivity/>`
 
-Filter transmission come from this `web page <https://www.naoj.org/Projects/HSC/forobservers.html>`_
-
-Plots can be found `here <https://www.naoj.org/Projects/HSC/filterData/fig.png>`_
+Plots can be found `here <https://www.naoj.org/Projects/HSC/filterData/fig.png>`
 
 Megacam
 =======
