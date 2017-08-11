@@ -50,7 +50,7 @@ class Colorterms(object):
                 for filt in self.filters.filters[syst]:
                     cmag[syst][filt] = np.array([mag.mag(syst=syst, filt=filt)[0]
                                                  for mag in self.mag_catalogs[cat]])
-                        
+
     def _make_pairing(self, first_fset, second_fset):
         """
         Pair filters from one system to an other.
@@ -87,8 +87,8 @@ class Colorterms(object):
         Transformations are of the following types:
         s1(f) = s2(f') + a * [s2(f') - s2(f'')]
 
-        Where s1(f) and s2(f') must be as cole as possible from each other in term of mean
-        wavelength and wavelength range. s2(f') and s2(f'') will be syde by syde filters.
+        Where s1(f) and s2(f') must be as close as possible from each other in term of mean
+        wavelength and wavelength range. s2(f') and s2(f'') will be side by side filters.
 
         e.g.: SDSS(g) = MEGACAM(g) + a * [MEGACAM(g) - MEGACAM(r)]
         """
@@ -119,10 +119,10 @@ class Colorterms(object):
                 colfit.plots()
                 for order in colfit.polyfits_outputs:
                     print("Order =", order, colfit.polyfits_outputs[order]['params'])
-                
+
 
     def plot_magdiff_vs_c(self, first_fset, second_fset, catalogs=None):
-        """Magnitude difference as a function color."""
+        """Magnitude difference as a function of color."""
         catalogs = self.catalogs.keys() if catalogs is None else catalogs
 
         self._make_pairing(first_fset, second_fset)
@@ -208,4 +208,4 @@ class Colorfit(object):
             ax.plot(xsorted, ysorted, label="order=%i, std=%.3f" %
                     (order, self.polyfits_outputs[order]["yresiduals_std"]))
         ax.legend(loc='best')
-        plt.show()    
+        plt.show()
