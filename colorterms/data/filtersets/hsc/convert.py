@@ -77,5 +77,5 @@ if __name__ == '__main__':
         ax1.set_xlabel("Wavelength (nm)")
         ax1.set_ylabel("Transmission (%)")
         ax1.legend(loc='best')
-    fig1.savefig("hsc_corrections.png")
+    fig0.savefig("hsc_corrections.png")
     fig1.savefig("hsc_filters.png")
