@@ -62,17 +62,17 @@ class Colorterms(object):
             self.pairs[second_fset] = {}
         if first_fset not in self.pairs[second_fset]:
             results = {}
-            for filt_2 in self.filters.ordered[first_fset]:
+            for filt_2 in self.filters.ordered[second_fset]:
                 # Mean wavelength for each filter of the first set
                 means = np.array([self.filters.filters[first_fset][filt_1].mean_wlength()
                                   for filt_1 in self.filters.ordered[first_fset]])
-                # Wavelength different of the current filter to all filters of the first set
+                # Wavelength difference of the current filter to all filters of the first set
                 diff = np.abs(self.filters.filters[first_fset][filt_2].mean_wlength() - means)
                 # Argument of the closest one
                 amin = np.argmin(diff)
                 # Closest one
-                filt = self.filters.ordered[first_fset][amin]
-                results[filt_2] = {'filter': filt}
+                closest_filt = self.filters.ordered[first_fset][amin]
+                results[filt_2] = {'filter': closest_filt}
                 # Colors corresponding to this closest filter
                 filts = list(self.filters.ordered[first_fset])
                 colors = np.concatenate([((filt, (filts + filts[:1])[i - 1]),
@@ -81,8 +81,53 @@ class Colorterms(object):
                 results[filt_2]['colors'] = colors
             self.pairs[second_fset][first_fset] = results
 
-    def compute_colorterms(self, first_fset, second_fset, catalogs=None):
-        """How to go from the first filterset to the second one.
+    def _get_data(self, first_fset, second_fset, filt, color, catalogs, cuts):
+        """Return valid data."""
+        # Short cut
+        localdic = self.pairs[second_fset][first_fset][filt]
+
+        # Get the data for all catalogs
+        m0 = np.concatenate([self.magnitudes[catalog][second_fset][filt]
+                             for catalog in catalogs])
+        m1 = np.concatenate([self.magnitudes[catalog][first_fset][localdic['filter']]
+                             for catalog in catalogs])
+        col = np.concatenate([self.magnitudes[catalog][first_fset][color[0]] - \
+                                      self.magnitudes[catalog][first_fset][color[1]]
+                              for catalog in catalogs])
+
+        # Apply filters if any
+        if cuts is not None:
+            mask = self._get_mask(second_fset, filt, m0, cuts)
+            mask &= self._get_mask(first_fset, localdic['filter'], m1, cuts)
+            mask &= self._get_mask(first_fset, "%s-%s" % (color[0], color[1]), col, cuts)
+            m0, m1, col = m0[mask], m1[mask], col[mask]
+
+        return m0, m1, col
+
+    def _get_mask(self, fset, param, data, cuts):
+        """
+        Apply cuts on a data set.
+
+        fset: The filter set
+        param: A filter name of a color name (e.g., g-i)
+        data: a numpy array of data to filter
+        cuts: a dictionnary of cuts
+
+        return a mask of the same dimension as data
+        """
+        mask = np.ones(len(data), dtype='bool')
+        if fset not in cuts:
+            return mask
+        if param not in cuts[fset]:
+            return mask
+        if 'min' in cuts[fset][param]:
+            mask &= data >= cuts[fset][param]['min']
+        if 'max' in cuts[fset][param]:
+            mask &= data <= cuts[fset][param]['max']
+        return mask
+
+    def compute_colorterms(self, first_fset, second_fset, catalogs=None, cuts=None):
+        """Compute colorterm slopes to go from the first filterset to the second one.
 
         Transformations are of the following types:
         s1(f) = s2(f') + a * [s2(f') - s2(f'')]
@@ -91,6 +136,15 @@ class Colorterms(object):
         wavelength and wavelength range. s2(f') and s2(f'') will be side by side filters.
 
         e.g.: SDSS(g) = MEGACAM(g) + a * [MEGACAM(g) - MEGACAM(r)]
+
+        catalogs: List of catalog to use in the fits
+        cuts: A dictionnary containing a possible list of cuts for each filter or color.
+              This dictionnary is of the following form, with no mandaotory keys:
+              cuts = {'megacam': {'g': {'min': 10, 'max': 22}       # for an individual filter
+                                  'g-r': {'min': 0.1, 'max': 1.5}   # for a color
+                                  }
+                      }
+              Filter sets and filters must exist. Colors are of the form 'f1-f2'.
         """
         catalogs = self.catalogs.keys() if catalogs is None else catalogs
         self._make_pairing(first_fset, second_fset)
@@ -98,17 +152,11 @@ class Colorterms(object):
         print("INFO: Computing colorterms to go from %s to %s" % (first_fset, second_fset))
         for filt in self.pairs[second_fset][first_fset]:
             localdic = self.pairs[second_fset][first_fset][filt]
-            m0 = np.concatenate([self.magnitudes[catalog][second_fset][filt]
-                                 for catalog in catalogs])
-            m1 = np.concatenate([self.magnitudes[catalog][first_fset][localdic['filter']]
-                                 for catalog in catalogs])
             for color in localdic['colors']:
                 print(" FITTING: %s(%s) - %s(%s) = f(%s(%s) - %s(%s))" %
                       (second_fset, filt, first_fset, localdic['filter'],
                        first_fset, color[0], first_fset, color[1]))
-                col = np.concatenate([self.magnitudes[catalog][first_fset][color[0]] - \
-                                      self.magnitudes[catalog][first_fset][color[1]]
-                                      for catalog in catalogs])
+                m0, m1, col = self._get_data(first_fset, second_fset, filt, color, catalogs, cuts)
                 colfit = Colorfit(m0 - m1, col,
                                   xlabel="%s(%s) - %s(%s)" % (first_fset, color[0],
                                                               first_fset, color[1]),
@@ -122,7 +170,7 @@ class Colorterms(object):
 
 
     def plot_magdiff_vs_c(self, first_fset, second_fset, catalogs=None):
-        """Magnitude difference as a function of color."""
+        """Magnitude difference as a function of color. DEPRECATED FOR NOW"""
         catalogs = self.catalogs.keys() if catalogs is None else catalogs
 
         self._make_pairing(first_fset, second_fset)
@@ -182,7 +230,7 @@ class Colorfit(object):
         elif isinstance(orders, int):
             pass
         else:
-            raise IOerror("The 'orders' argument must be a integer, a string or a list")
+            raise IOError("The 'orders' argument must be a integer, a string or a list")
         for order in orders:
             output = self.polyfits_outputs[order] = {}
             output['params'] = polyfit(self.color, self.magdiff, order)
