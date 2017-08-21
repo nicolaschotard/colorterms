@@ -95,6 +95,10 @@ class Colorterms(object):
                                       self.magnitudes[catalog][first_fset][color[1]]
                               for catalog in catalogs])
 
+        # first make sure to remove all possible inf or None values
+        mask = np.isfinite(m0) & np.isfinite(m1) & np.isfinite(col)
+        m0, m1, col = m0[mask], m1[mask], col[mask]
+
         # Apply filters if any
         if cuts is not None:
             mask = self._get_mask(second_fset, filt, m0, cuts)
@@ -206,10 +210,8 @@ class Colorfit(object):
         ylabel: Label of the `magdiff` argument for plot purpose
         title: A title for the figure
         """
-        # first make sure to remove all possible inf of None values
-        mask = np.isfinite(magdiff) & np.isfinite(color)
-        self.magdiff = magdiff[mask]
-        self.color = color[mask]
+        self.magdiff = magdiff
+        self.color = color
         self.kwargs = kwargs
         self.params = {}
         self.polyfits_outputs = {}
