@@ -58,11 +58,20 @@ class Spectrum(object):
 
 
 class Magnitude(object):
-    def __init__(self, spectrum, filters):
+
+    """Compute magnitudes for a given spectrum a filter sets."""
+
+    def __init__(self, spectrum, filtersets):
+        """
+        Initialize a Magnitude object, ready to compute magnitudes for a 
+        given spectrum a filter sets.
+
+        :param object spectrum: A spectools.Spectrum object
+        :param object filters: A filtersets.Filters object
+        """
         self.spectrum = spectrum
-        self.filters = filters
-        
-        
+        self.filters = filtersets
+
     def mag(self, step=None, syst='megacam', filt='g'):
         """
         Computes the magnitude of a given spectrum.
@@ -81,8 +90,8 @@ class Magnitude(object):
         # check filter
         filto = self.filters.check_filter(syst, filt)
 
-        photons = integ_photons(self.spectrum.lbda, self.spectrum.flux, step, filto.lbda,
-                                filto.flux)
+        photons = integ_photons(self.spectrum.lbda, self.spectrum.flux, step,
+                                filto.lbda, filto.flux)
         # refphotons = utils.integ_photons(self.RefSpec.lbda, self.RefSpec.flux,
         #                                  None, filt.lbda, filt.flux)
 
@@ -104,6 +113,51 @@ class Magnitude(object):
             return float(outmag), float(magerr)
         else:
             return float(outmag), None
+
+
+class Magnitudes(object):
+    
+    def __init__(self, catalogs, filters):
+
+        self.catalogs = catalogs
+        self.filters = filters
+        self.mag_catalogs = {}
+        self.magnitudes = {}
+    
+
+    def compute_magnitudes(self, filtersets=None, catalogs=None):
+        """Compute the magnitudes for a given system and catalog.
+        
+        If 'filters' is None, magnitudes will be computed for all available filter sets.
+        If 'catalog_list' is None, magnitudes will be computed for all available catalogs.
+        Magnitudes are stored in self.magnitudes.
+        """
+        catalogs = catalogs if catalogs is not None else self.catalogs.keys()
+        # Create mags object for all spectra of all catalogs
+        for cat in catalogs:
+            if cat in self.mag_catalogs:
+                continue
+            else:
+                self.mag_catalogs[cat] = [Magnitude(spec, self.filters)
+                                          for spec in self.catalogs[cat].spectra]
+
+        # Compute magnitudes for all spectra for the input list of catalogs
+        # and for all filters of the two input systems
+        filtersets = filtersets if filtersets is not None else self.filters.filters.keys()        
+        for cat in catalogs:
+            print("INFO: Computing magnitudes for the %s catalog" % cat)
+            if cat not in self.magnitudes.keys():
+                cmag = self.magnitudes[cat] = {}
+            else:
+                cmag = self.magnitudes[cat]
+            for syst in filtersets:
+                if syst in cmag:
+                    continue
+                print(" -> filter set: %s" % syst)
+                cmag[syst] = {}
+                for filt in self.filters.filters[syst]:
+                    cmag[syst][filt] = np.array([mag.mag(syst=syst, filt=filt)[0]
+                                                 for mag in self.mag_catalogs[cat]])
 
 def integ_photons(lbda, flux, step, flbda, filt):
 

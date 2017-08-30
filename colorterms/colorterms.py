@@ -103,7 +103,7 @@ class Colorterms(object):
         if cuts is not None:
             mask = self._get_mask(second_fset, filt, m0, cuts)
             mask &= self._get_mask(first_fset, localdic['filter'], m1, cuts)
-            mask &= self._get_mask(first_fset, "%s-%s" % (color[0], color[1]), col, cuts)
+            mask &= self._get_mask(first_fset, "%s - %s" % (color[0], color[1]), col, cuts)
             m0, m1, col = m0[mask], m1[mask], col[mask]
 
         return m0, m1, col
@@ -120,14 +120,19 @@ class Colorterms(object):
         return a mask of the same dimension as data
         """
         mask = np.ones(len(data), dtype='bool')
+        iparam = ' - '.join(param.split(' - ')[::-1])  # for invert color
         if fset not in cuts:
             return mask
-        if param not in cuts[fset]:
-            return mask
-        if 'min' in cuts[fset][param]:
-            mask &= data >= cuts[fset][param]['min']
-        if 'max' in cuts[fset][param]:
-            mask &= data <= cuts[fset][param]['max']
+        if param in cuts[fset]:
+            if 'min' in cuts[fset][param]:
+                mask &= data >= cuts[fset][param]['min']
+            if 'max' in cuts[fset][param]:
+                mask &= data <= cuts[fset][param]['max']
+        elif iparam in cuts[fset]:
+            if 'min' in cuts[fset][iparam]:
+                mask &= data <= -cuts[fset][iparam]['min']
+            if 'max' in cuts[fset][iparam]:
+                mask &= data >= -cuts[fset][iparam]['max']
         return mask
 
     def compute_colorterms(self, first_fset, second_fset, catalogs=None, cuts=None):
@@ -145,10 +150,12 @@ class Colorterms(object):
         cuts: A dictionnary containing a possible list of cuts for each filter or color.
               This dictionnary is of the following form, with no mandaotory keys:
               cuts = {'megacam': {'g': {'min': 10, 'max': 22}       # for an individual filter
-                                  'g-r': {'min': 0.1, 'max': 1.5}   # for a color
+                                  'g - r': {'min': 0.1, 'max': 1.5}   # for a color
                                   }
                       }
-              Filter sets and filters must exist. Colors are of the form 'f1-f2'.
+              Filter sets and filters must exist. 
+              Colors are of the form 'f1 - f2'.
+              If 'f1 - f2' is defined, 'f2 - f1' will also be filtered if needed.
         """
         catalogs = self.catalogs.keys() if catalogs is None else catalogs
         self._make_pairing(first_fset, second_fset)
