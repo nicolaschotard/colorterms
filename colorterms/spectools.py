@@ -164,7 +164,7 @@ class Magnitudes(object):
         catalogs = list(catalogs) if catalogs is not None else self.catalogs.keys()
         filtersets = list(filtersets) if filtersets is not None else self.filters.filters.keys()
         for fset in filtersets:
-            for filt in self.filters[fset].keys():
+            for filt in self.filters.filters[fset].keys():
                 mags, labels = [], []
                 for cat in catalogs:
                     if cat not in self.magnitudes.keys():
@@ -174,7 +174,7 @@ class Magnitudes(object):
                     else:
                         mags.append(self.magnitudes[cat][fset][filt])
                         labels.append(cat)
-                if len(mags) 1= 0:
+                if len(mags) != 0:
                     fig = pl.figure()
                     ax = fig.add_subplot(111)
                     ax.xlabel('%s - %s magnitudes' % (fset, filt))
@@ -182,7 +182,7 @@ class Magnitudes(object):
                         ax.hist(mag, label=label)
                     ax.legend(loc='best')
         pl.show()
-                        
+
 
 def integ_photons(lbda, flux, step, flbda, filt):
 

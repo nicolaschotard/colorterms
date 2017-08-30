@@ -101,14 +101,18 @@ class Colorterms(object):
 
         # Apply filters if any
         if cuts is not None:
-            mask = self._get_mask(second_fset, filt, m0, cuts)
-            mask &= self._get_mask(first_fset, localdic['filter'], m1, cuts)
-            mask &= self._get_mask(first_fset, "%s - %s" % (color[0], color[1]), col, cuts)
+            mask = self._get_mask("%s(%s)" % (second_fset, filt), m0, cuts)
+            mask &= self._get_mask("%s(%s)" % (first_fset, localdic['filter']), m1, cuts)
+            mask &= self._get_mask("%s(%s) - %s(%s)" % (second_fset, filt,
+                                                        first_fset, localdic['filter']),
+                                   m0 - m1, cuts)
+            mask &= self._get_mask("%s(%s) - %s(%s)" % (first_fset, color[0], first_fset, color[1]),
+                                   col, cuts)
             m0, m1, col = m0[mask], m1[mask], col[mask]
 
         return m0, m1, col
 
-    def _get_mask(self, fset, param, data, cuts):
+    def _get_mask(self, param, data, cuts):
         """
         Apply cuts on a data set.
 
@@ -120,19 +124,17 @@ class Colorterms(object):
         return a mask of the same dimension as data
         """
         mask = np.ones(len(data), dtype='bool')
-        iparam = ' - '.join(param.split(' - ')[::-1])  # for invert color
-        if fset not in cuts:
-            return mask
-        if param in cuts[fset]:
-            if 'min' in cuts[fset][param]:
-                mask &= data >= cuts[fset][param]['min']
-            if 'max' in cuts[fset][param]:
-                mask &= data <= cuts[fset][param]['max']
-        elif iparam in cuts[fset]:
-            if 'min' in cuts[fset][iparam]:
-                mask &= data <= -cuts[fset][iparam]['min']
-            if 'max' in cuts[fset][iparam]:
-                mask &= data >= -cuts[fset][iparam]['max']
+        iparam = ' - '.join(param.split(' - ')[::-1])  # (a - b) -> (b - a)
+        if param in cuts:
+            if 'min' in cuts[param]:
+                mask &= data >= cuts[param]['min']
+            if 'max' in cuts[param]:
+                mask &= data <= cuts[param]['max']
+        elif iparam in cuts:
+            if 'min' in cuts[iparam]:
+                mask &= data <= -cuts[iparam]['min']
+            if 'max' in cuts[iparam]:
+                mask &= data >= -cuts[iparam]['max']
         return mask
 
     def compute_colorterms(self, first_fset, second_fset, catalogs=None, cuts=None):
@@ -148,14 +150,12 @@ class Colorterms(object):
 
         catalogs: List of catalog to use in the fits
         cuts: A dictionnary containing a possible list of cuts for each filter or color.
-              This dictionnary is of the following form, with no mandaotory keys:
-              cuts = {'megacam': {'g': {'min': 10, 'max': 22}       # for an individual filter
-                                  'g - r': {'min': 0.1, 'max': 1.5}   # for a color
-                                  }
-                      }
-              Filter sets and filters must exist. 
-              Colors are of the form 'f1 - f2'.
-              If 'f1 - f2' is defined, 'f2 - f1' will also be filtered if needed.
+              This dictionnary is of the following form, with no mandatory key:
+              cuts = {'megacam(g) - sdss(g)': {'min': 10, 'max': 22}
+                      'sdss(g) - sdss(r)': {'min': 0.1, 'max': 1.5}
+                     }
+              All cuta are of the form: system(filt) - system(filt).
+              If 'sdss(g) - megacam(r)' is defined, 'megacam(r) - sdss(g)' will automatically works.
         """
         catalogs = self.catalogs.keys() if catalogs is None else catalogs
         self._make_pairing(first_fset, second_fset)
