@@ -223,7 +223,7 @@ class Colorfit(object):
         self.params = {}
         self.polyfits_outputs = {}
 
-    def polyfits(self, orders="1,2,3", sigma_clip=0):
+    def polyfits(self, orders="1,2,3", sigma_clip=None, mask=None):
         """
         Simple polynomial fits of order 1, 2, 3.
 
@@ -242,12 +242,20 @@ class Colorfit(object):
         else:
             raise IOError("The 'orders' argument must be a integer, a string or a list")
         for order in orders:
+            mask = mask if mask is not None else np.ones(len(self.color))
             output = self.polyfits_outputs[order] = {}
-            output['params'] = polyfit(self.color, self.magdiff, order)
+            output['params'] = polyfit(self.color[mask], self.magdiff[mask], order)
             output['ymodel'] = polyval(output["params"], self.color)
             output['yresiduals'] = self.magdiff - output['ymodel']
             output['yresiduals_mean'] = np.mean(output['yresiduals'])
             output['yresiduals_std'] = np.std(output['yresiduals'])
+            output['sigma_clip'] = np.inf if sigma_clip is None else sigma_clip
+            output['outliers_mask'] = mask
+            if sigma_clip is not None:
+                outliers = np.absolute(output['yresiduals']) \
+                           >= sigma_clip * output['yresiduals_std']
+                while np.any(outliers):
+                    self.polyfits(orders=str(order), mask=outliers)
 
     def plots(self):
         """Plot the polynomial fit results."""
