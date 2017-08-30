@@ -137,7 +137,8 @@ class Colorterms(object):
                 mask &= data >= -cuts[iparam]['max']
         return mask
 
-    def compute_colorterms(self, first_fset, second_fset, catalogs=None, cuts=None):
+    def compute_colorterms(self, first_fset, second_fset,
+                           catalogs=None, cuts=None, sigma_clip=None):
         """Compute colorterm slopes to go from the first filterset to the second one.
 
         Transformations are of the following types:
@@ -156,6 +157,7 @@ class Colorterms(object):
                      }
               All cuta are of the form: system(filt) - system(filt).
               If 'sdss(g) - megacam(r)' is defined, 'megacam(r) - sdss(g)' will automatically works.
+        sigma_clip: Sigma clipping value while fitting for color terms
         """
         catalogs = self.catalogs.keys() if catalogs is None else catalogs
         self._make_pairing(first_fset, second_fset)
@@ -174,7 +176,7 @@ class Colorterms(object):
                                   ylabel="%s(%s) - %s(%s)" % (second_fset, filt, first_fset,
                                                               localdic['filter']),
                                   title="%s, %s filter" % (second_fset, filt))
-                colfit.polyfits()
+                colfit.polyfits(sigma_clip=sigma_clip)
                 colfit.plots()
                 for order in colfit.polyfits_outputs:
                     print("Order =", order, colfit.polyfits_outputs[order]['params'])
@@ -217,13 +219,15 @@ class Colorfit(object):
         ylabel: Label of the `magdiff` argument for plot purpose
         title: A title for the figure
         """
+        self.init_magdiff = magdiff
+        self.init_color = color
         self.magdiff = magdiff
         self.color = color
         self.kwargs = kwargs
         self.params = {}
         self.polyfits_outputs = {}
 
-    def polyfits(self, orders="1,2,3", sigma_clip=None, mask=None):
+    def polyfits(self, orders="1,2,3", sigma_clip=None):
         """
         Simple polynomial fits of order 1, 2, 3.
 
@@ -242,20 +246,39 @@ class Colorfit(object):
         else:
             raise IOError("The 'orders' argument must be a integer, a string or a list")
         for order in orders:
-            mask = mask if mask is not None else np.ones(len(self.color))
-            output = self.polyfits_outputs[order] = {}
-            output['params'] = polyfit(self.color[mask], self.magdiff[mask], order)
+            if order in self.polyfits_outputs:
+                output = self.polyfits_outputs[order]
+            else:
+                output = self.polyfits_outputs[order] = {}
+            output['params'] = polyfit(self.color, self.magdiff, order)
             output['ymodel'] = polyval(output["params"], self.color)
             output['yresiduals'] = self.magdiff - output['ymodel']
             output['yresiduals_mean'] = np.mean(output['yresiduals'])
             output['yresiduals_std'] = np.std(output['yresiduals'])
             output['sigma_clip'] = np.inf if sigma_clip is None else sigma_clip
-            output['outliers_mask'] = mask
+            if 'outliers' not in output:
+                output['outliers'] = {'x': [], 'y': []}
             if sigma_clip is not None:
-                outliers = np.absolute(output['yresiduals']) \
-                           >= sigma_clip * output['yresiduals_std']
+                outliers = (np.absolute(output['yresiduals']) \
+                           >= sigma_clip * output['yresiduals_std'])
                 while np.any(outliers):
-                    self.polyfits(orders=str(order), mask=outliers)
+                    # keep track of the outliers
+                    output['outliers']['x'].extend(self.color[outliers])
+                    output['outliers']['y'].extend(self.magdiff[outliers])
+                    # and only keep good data for the next fit...
+                    self.magdiff = self.magdiff[~outliers]
+                    self.color = self.color[~outliers]
+                    # redo the fit
+                    self.polyfits(orders=str(order))
+                    # check for new outliers
+                    outliers = np.absolute(output['yresiduals']) \
+                               >= sigma_clip * output['yresiduals_std']
+                # re-compute the output using the initial input data
+                output['ymodel'] = polyval(output["params"], self.init_color)
+                output['yresiduals'] = self.init_magdiff - output['ymodel']
+                output['yresiduals_mean'] = np.mean(output['yresiduals'])
+                output['yresiduals_std'] = np.std(output['yresiduals'])
+                output['sigma_clip'] = np.inf if sigma_clip is None else sigma_clip
 
     def plots(self):
         """Plot the polynomial fit results."""
@@ -273,5 +296,7 @@ class Colorfit(object):
             ysorted = polyval(self.polyfits_outputs[order]["params"], xsorted)
             ax.plot(xsorted, ysorted, label="order=%i, std=%.3f" %
                     (order, self.polyfits_outputs[order]["yresiduals_std"]))
+            ax.plot(self.polyfits_outputs[order]['outliers']['x'],
+                    self.polyfits_outputs[order]['outliers']['y'], 'or')
         ax.legend(loc='best')
         plt.show()
