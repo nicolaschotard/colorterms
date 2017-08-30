@@ -2,6 +2,7 @@
 
 
 import numpy as np
+import pylab as pl
 
 
 class Spectrum(object):
@@ -121,7 +122,7 @@ class Magnitudes(object):
 
         self.catalogs = catalogs
         self.filters = filters
-        self.mag_catalogs = {}
+        self._mag_catalogs = {}
         self.magnitudes = {}
     
 
@@ -132,18 +133,18 @@ class Magnitudes(object):
         If 'catalog_list' is None, magnitudes will be computed for all available catalogs.
         Magnitudes are stored in self.magnitudes.
         """
-        catalogs = catalogs if catalogs is not None else self.catalogs.keys()
+        catalogs = list(catalogs) if catalogs is not None else self.catalogs.keys()
         # Create mags object for all spectra of all catalogs
         for cat in catalogs:
-            if cat in self.mag_catalogs:
+            if cat in self._mag_catalogs:
                 continue
             else:
-                self.mag_catalogs[cat] = [Magnitude(spec, self.filters)
-                                          for spec in self.catalogs[cat].spectra]
+                self._mag_catalogs[cat] = [Magnitude(spec, self.filters)
+                                           for spec in self.catalogs[cat].spectra]
 
         # Compute magnitudes for all spectra for the input list of catalogs
         # and for all filters of the two input systems
-        filtersets = filtersets if filtersets is not None else self.filters.filters.keys()        
+        filtersets = list(filtersets) if filtersets is not None else self.filters.filters.keys()        
         for cat in catalogs:
             print("INFO: Computing magnitudes for the %s catalog" % cat)
             if cat not in self.magnitudes.keys():
@@ -157,7 +158,31 @@ class Magnitudes(object):
                 cmag[syst] = {}
                 for filt in self.filters.filters[syst]:
                     cmag[syst][filt] = np.array([mag.mag(syst=syst, filt=filt)[0]
-                                                 for mag in self.mag_catalogs[cat]])
+                                                 for mag in self._mag_catalogs[cat]])
+
+    def hists(self, filtersets=None, catalogs=None):
+        catalogs = list(catalogs) if catalogs is not None else self.catalogs.keys()
+        filtersets = list(filtersets) if filtersets is not None else self.filters.filters.keys()
+        for fset in filtersets:
+            for filt in self.filters[fset].keys():
+                mags, labels = [], []
+                for cat in catalogs:
+                    if cat not in self.magnitudes.keys():
+                        continue
+                    elif fset not in self.magnitudes[cat].keys():
+                        continue
+                    else:
+                        mags.append(self.magnitudes[cat][fset][filt])
+                        labels.append(cat)
+                if len(mags) 1= 0:
+                    fig = pl.figure()
+                    ax = fig.add_subplot(111)
+                    ax.xlabel('%s - %s magnitudes' % (fset, filt))
+                    for mag, label in zip(mags, labels):
+                        ax.hist(mag, label=label)
+                    ax.legend(loc='best')
+        pl.show()
+                        
 
 def integ_photons(lbda, flux, step, flbda, filt):
 
