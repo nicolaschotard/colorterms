@@ -223,12 +223,13 @@ class Colorfit(object):
         self.params = {}
         self.polyfits_outputs = {}
 
-    def polyfits(self, orders="1,2,3"):
+    def polyfits(self, orders="1,2,3", sigma_clip=0):
         """
         Simple polynomial fits of order 1, 2, 3.
 
         orders: A integer, a list of string or integer, or a string.
                 e.g.: orders = 1 or "1" or "1,2,3" or ["1", "2"] or [1, 2]
+        sigma_clip: Clip points above this limit and redo the fit iteratively.
 
         Results saved in self.polyfits_outputs
         """
