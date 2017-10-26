@@ -10,11 +10,16 @@ from . import spectools
 
 class Filters(object):
 
-    def __init__(self, verbose=True):
+    def __init__(self, load=True, verbose=True):
         """Load all available filter sets."""
+        # Get the obsolute path of the directory in whith the filter sets are stored
         self.path_to_filters = resource_filename('colorterms', 'data/filtersets')
-        self.load_filters(verbose=verbose)
-        self.ordered = self.order_by_wlength()
+        # Get the filter descriptions
+        self._read_filterset_descriptions()
+        # Load them if asked
+        if load:
+            self.load_filters(verbose=verbose)
+            self.ordered = self.order_by_wlength()
 
     def _read_filterset_descriptions(self):
         """
@@ -33,9 +38,6 @@ class Filters(object):
         - Filters
         - RefSpec
         """
-        # Get the filter description
-        self._read_filterset_descriptions()
-
         # Check first if the filters are already loaded
         if hasattr(self, 'filters'):
             return

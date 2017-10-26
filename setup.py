@@ -3,7 +3,7 @@
 """Setup script."""
 
 import os
-#import glob
+import glob
 from setuptools import setup, find_packages
 
 # Long description loaded from the README
@@ -22,7 +22,7 @@ NAME = 'colorterms'
 PACKAGES = find_packages()
 
 # Scripts (in scripts/)
-#SCRIPTS = glob.glob("scripts/*.py")
+SCRIPTS = glob.glob("scripts/*.py")
 
 PACKAGE_DATA = {NAME: ["data/filtersets/*", "data/filtersets/*/*",
                        "data/catalogs/*", "data/catalogs/*/*"]}
@@ -43,7 +43,7 @@ setup(name=NAME,
       author="Nicolas Chotard",
       author_email="nchotard@in2p3.fr",
       packages=PACKAGES,
-      #scripts=SCRIPTS,
+      scripts=SCRIPTS,
       package_data=PACKAGE_DATA,
       long_description=open(README).read(),
       #setup_requires=['pytest-runner'],

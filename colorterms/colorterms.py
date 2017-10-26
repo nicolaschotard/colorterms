@@ -165,6 +165,7 @@ class Colorterms(object):
         print("INFO: Computing colorterms to go from %s to %s" % (first_fset, second_fset))
         for filt in self.pairs[second_fset][first_fset]:
             localdic = self.pairs[second_fset][first_fset][filt]
+            localdic['results'] = {}
             for color in localdic['colors']:
                 print(" FITTING: %s(%s) - %s(%s) = f(%s(%s) - %s(%s))" %
                       (second_fset, filt, first_fset, localdic['filter'],
@@ -178,9 +179,28 @@ class Colorterms(object):
                                   title="%s, %s filter" % (second_fset, filt))
                 colfit.polyfits(sigma_clip=sigma_clip)
                 colfit.plots()
+                results = localdic['results'][",".join(color)] = {}
                 for order in colfit.polyfits_outputs:
-                    print("Order =", order, colfit.polyfits_outputs[order]['params'])
-
+                    print("Order =", order, colfit.polyfits_outputs[order]['params'],
+                          " (STD=%.3f)" % colfit.polyfits_outputs[order]['yresiduals_std'])
+                    results[order] = colfit.polyfits_outputs[order]['yresiduals_std']
+                    
+        # Order them by best RMS for each pair
+        for filt in self.pairs[second_fset][first_fset]:
+            localdic = self.pairs[second_fset][first_fset][filt]
+            print(" BEST FIT FOR: %s(%s) - %s(%s) = f(%s(??) - %s(??))" %
+                      (second_fset, filt, first_fset, localdic['filter'],
+                       first_fset, first_fset))
+            colors, results = [], []
+            for color in localdic['results']:
+                for order in localdic['results'][color]:
+                    colors.append("f(%s(%s) - %s(%s)) [%i]" % (first_fset, color.split(',')[0],
+                                                               first_fset, color.split(',')[1],
+                                                               int(order)))
+                    results.append(localdic['results'][color][order])
+            for c, r in zip(np.array(colors)[np.argsort(results)], np.sort(results)):
+                print(c, ": RMS=%.3f" % r)
+                    
 
     def plot_magdiff_vs_c(self, first_fset, second_fset, catalogs=None):
         """Magnitude difference as a function of color. DEPRECATED FOR NOW"""
@@ -299,4 +319,5 @@ class Colorfit(object):
             ax.plot(self.polyfits_outputs[order]['outliers']['x'],
                     self.polyfits_outputs[order]['outliers']['y'], 'or')
         ax.legend(loc='best')
-        plt.show()
+        fig.savefig("%s_VS_%s.png" % (self.kwargs.get("ylabel", "p1"),
+                                      self.kwargs.get("xlabel", "p2")))

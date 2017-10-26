@@ -12,9 +12,9 @@ from . import spectools
 class Catalog(object):
 
     def __init__(self, name, spectra, catpath=None):
-        """A catalog contains a collectino of spectra.
+        """A catalog contains a collection of spectra.
 
-        It is define by name."""
+        It is define by its name."""
         self.name = name
         self.spectra = spectra
         self.catpath = catpath
