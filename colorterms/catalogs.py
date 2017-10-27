@@ -57,19 +57,22 @@ def get_catalog_list():
     return {cat: cat_path for cat, cat_path in zip(catalogs, catpaths)}
 
 
-def load_catalogs():
+def load_catalogs(verbose=True):
     """Load all available catalogs and return a lost of Catalog objects."""
     catalogs = []
     catalog_names = get_catalog_list()
     for catalog in catalog_names:
         if catalog == "gunnstryker":
-            print("INFO: Loading the '%s' catalog" % catalog)
+            if verbose:
+                print("INFO: Loading the '%s' catalog" % catalog)
             catalogs.append(load_gunnstryker_catalog(catalog_names[catalog]))
         elif catalog == "calspec":
-            print("INFO: Loading the '%s' catalog" % catalog)
+            if verbose:
+                print("INFO: Loading the '%s' catalog" % catalog)
             catalogs.extend(load_calspec_catalog(catalog_names[catalog]))
         elif catalog == "pickles1998":
-            print("INFO: Loading the '%s' catalog" % catalog)
+            if verbose:
+                print("INFO: Loading the '%s' catalog" % catalog)
             catalogs.extend(load_pickles1998_catalog(catalog_names[catalog]))
         else:
             print("WARNING: Loader for catalog '%s' isn't implemented yet." % catalog)

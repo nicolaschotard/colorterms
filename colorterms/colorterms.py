@@ -137,8 +137,8 @@ class Colorterms(object):
                 mask &= data >= -cuts[iparam]['max']
         return mask
 
-    def compute_colorterms(self, first_fset, second_fset,
-                           catalogs=None, cuts=None, sigma_clip=None):
+    def compute_colorterms(self, first_fset, second_fset, catalogs=None,
+                               cuts=None, sigma_clip=None, verbose=False):
         """Compute colorterm slopes to go from the first filterset to the second one.
 
         Transformations are of the following types:
@@ -167,9 +167,10 @@ class Colorterms(object):
             localdic = self.pairs[second_fset][first_fset][filt]
             localdic['results'] = {}
             for color in localdic['colors']:
-                print(" FITTING: %s(%s) - %s(%s) = f(%s(%s) - %s(%s))" %
-                      (second_fset, filt, first_fset, localdic['filter'],
-                       first_fset, color[0], first_fset, color[1]))
+                if verbose:
+                    print(" FITTING: %s(%s) - %s(%s) = f(%s(%s) - %s(%s))" %
+                          (second_fset, filt, first_fset, localdic['filter'],
+                           first_fset, color[0], first_fset, color[1]))
                 m0, m1, col = self._get_data(first_fset, second_fset, filt, color, catalogs, cuts)
                 colfit = Colorfit(m0 - m1, col,
                                   xlabel="%s(%s) - %s(%s)" % (first_fset, color[0],
@@ -181,8 +182,9 @@ class Colorterms(object):
                 colfit.plots()
                 results = localdic['results'][",".join(color)] = {}
                 for order in colfit.polyfits_outputs:
-                    print("Order =", order, colfit.polyfits_outputs[order]['params'],
-                          " (STD=%.3f)" % colfit.polyfits_outputs[order]['yresiduals_std'])
+                    if verbose:
+                        print("Order =", order, colfit.polyfits_outputs[order]['params'],
+                              " (STD=%.3f)" % colfit.polyfits_outputs[order]['yresiduals_std'])
                     results[order] = colfit.polyfits_outputs[order]['yresiduals_std']
                     
         # Order them by best RMS for each pair
