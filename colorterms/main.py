@@ -29,6 +29,8 @@ def colorfit(argv=None):
                         help='A yaml file containing cuts to be applied on magnitudes or colors.')
     parser.add_argument('--sigma', default=None,
                         help='Iterative sigma clipping while fitting.')
+    parser.add_argument('--saveto', default="colorterms.yaml",
+                        help='Name of the file in which to save results.')
     parser.add_argument('--show', action='store_true', default=False,
                         help="Show the list of available filter sets and catalogs along with an "
                         "exemple of what should the 'cuts' yaml file should look like, and exit")
@@ -79,3 +81,4 @@ def colorfit(argv=None):
     colorterm = Colorterms.Colorterms(catalogs, filters)
     colorterm.compute_colorterms(filtersets[0], filtersets[1], cuts=args.cuts,
                                  sigma_clip=args.sigma, verbose=False)
+    #colorterm.save_colorterms(args.saveto)

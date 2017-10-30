@@ -61,7 +61,7 @@ class Colorterms(object):
         if second_fset not in self.pairs:
             self.pairs[second_fset] = {}
         if first_fset not in self.pairs[second_fset]:
-            results = {}
+            paired = {}
             for filt_2 in self.filters.ordered[second_fset]:
                 # Mean wavelength for each filter of the first set
                 means = np.array([self.filters.filters[first_fset][filt_1].mean_wlength()
@@ -72,14 +72,16 @@ class Colorterms(object):
                 amin = np.argmin(diff)
                 # Closest one
                 closest_filt = self.filters.ordered[first_fset][amin]
-                results[filt_2] = {'filter': closest_filt}
+                paired[filt_2] = {'filter': closest_filt}
                 # Colors corresponding to this closest filter
                 filts = list(self.filters.ordered[first_fset])
                 colors = np.concatenate([((filt, (filts + filts[:1])[i - 1]),
                                           (filt, (filts + filts[:1])[i + 1]))
                                          for i, filt in enumerate(filts)])[1:-1]
-                results[filt_2]['colors'] = colors
-            self.pairs[second_fset][first_fset] = results
+                # Only keep colors where the closest filter is also part of the color definition
+                colors = [c for c in colors if c[0] == closest_filt]
+                paired[filt_2]['colors'] = colors
+            self.pairs[second_fset][first_fset] = paired
 
     def _get_data(self, first_fset, second_fset, filt, color, catalogs, cuts):
         """Return valid data."""
@@ -186,7 +188,11 @@ class Colorterms(object):
                         print("Order =", order, colfit.polyfits_outputs[order]['params'],
                               " (STD=%.3f)" % colfit.polyfits_outputs[order]['yresiduals_std'])
                     results[order] = colfit.polyfits_outputs[order]['yresiduals_std']
-                    
+
+        self._order_by_rms(first_fset, second_fset)
+
+    def _order_by_rms(self, first_fset, second_fset):
+                        
         # Order them by best RMS for each pair
         for filt in self.pairs[second_fset][first_fset]:
             localdic = self.pairs[second_fset][first_fset][filt]
