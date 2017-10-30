@@ -39,7 +39,7 @@ def colorfit(argv=None):
         filters = Filtersets.Filters(load=False)
         print("Available filter sets are:")
         for filt in sorted(filters.filtersets.keys()):
-            print(" - %s" % filt)
+            print(" - %s" % filt, filters.filtersets[filt])
 
         # Show the list of available catalogs
         catalogs = Catalogs.get_catalog_list()

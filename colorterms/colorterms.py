@@ -67,7 +67,7 @@ class Colorterms(object):
                 means = np.array([self.filters.filters[first_fset][filt_1].mean_wlength()
                                   for filt_1 in self.filters.ordered[first_fset]])
                 # Wavelength difference of the current filter to all filters of the first set
-                diff = np.abs(self.filters.filters[first_fset][filt_2].mean_wlength() - means)
+                diff = np.abs(self.filters.filters[second_fset][filt_2].mean_wlength() - means)
                 # Argument of the closest one
                 amin = np.argmin(diff)
                 # Closest one
