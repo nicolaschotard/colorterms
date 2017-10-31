@@ -293,8 +293,8 @@ class Colorfit(object):
             output['params'] = list(polyfit(self.color, self.magdiff, order))
             output['ymodel'] = list(polyval(output["params"], self.color))
             output['yresiduals'] = list(self.magdiff - output['ymodel'])
-            output['yresiduals_mean'] = list(np.mean(output['yresiduals']))
-            output['yresiduals_std'] = list(np.std(output['yresiduals']))
+            output['yresiduals_mean'] = np.mean(output['yresiduals'])
+            output['yresiduals_std'] = np.std(output['yresiduals'])
             output['sigma_clip'] = np.inf if sigma_clip is None else sigma_clip
             if 'outliers' not in output:
                 output['outliers'] = {'x': [], 'y': []}
