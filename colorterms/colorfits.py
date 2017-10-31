@@ -11,6 +11,8 @@ from . import spectools
 
 class Colorterms(object):
 
+    """Compute color terms to go from one filter set to an other."""
+
     def __init__(self, catalogs, filters):
         """Initialization."""
         # Initiale inputs
@@ -143,7 +145,7 @@ class Colorterms(object):
         return mask
 
     def compute_colorterms(self, first_fset, second_fset, catalogs=None,
-                               cuts=None, sigma_clip=None, verbose=False):
+                           cuts=None, sigma_clip=None, verbose=False):
         """Compute colorterm slopes to go from the first filterset to the second one.
 
         Transformations are of the following types:
@@ -164,7 +166,7 @@ class Colorterms(object):
               If 'sdss(g) - megacam(r)' is defined, 'megacam(r) - sdss(g)' will automatically works.
         sigma_clip: Sigma clipping value while fitting for color terms
         """
-        catalogs = self.catalogs.keys() if catalogs is None else catalogs
+        catalogs = list(self.catalogs.keys()) if catalogs is None else catalogs
         self._make_pairing(first_fset, second_fset)
         self._compute_magnitudes(first_fset, second_fset)
         print("INFO: Computing colorterms to go from %s to %s" % (first_fset, second_fset))
@@ -184,7 +186,9 @@ class Colorterms(object):
                                                               localdic['filter']),
                                   title="%s, %s filter" % (second_fset, filt))
                 colfit.polyfits(sigma_clip=sigma_clip)
-                colfit.plots()
+                bcd = np.transpose([self._get_data(first_fset, second_fset, filt, color, [catalog],
+                                                   cuts) for catalog in catalogs])
+                colfit.plots(bycat_data=np.transpose([bcd[0], bcd[1], bcd[2], catalogs]))
                 results = localdic['results'][",".join(color)] = {}
                 for order in colfit.polyfits_outputs:
                     if verbose:
@@ -320,12 +324,14 @@ class Colorfit(object):
                 output['yresiduals_std'] = np.std(output['yresiduals'])
                 output['sigma_clip'] = np.inf if sigma_clip is None else sigma_clip
 
-    def plots(self):
+    def plots(self, bycat_data=None):
         """Plot the polynomial fit results."""
         if len(self.polyfits_outputs) == 0:
             raise "INFO: You must run the polyfits method first"
-        fig = plt.figure()
-        ax = fig.add_subplot(111)
+
+        # Main figure with fits on the first axis
+        fig = plt.figure(figsize=(12, 10))
+        ax = fig.add_subplot(111 if bycat_data is None else 121)
         ax.set_xlabel(self.kwargs.get("xlabel", ""))
         ax.set_ylabel(self.kwargs.get("ylabel", ""))
         ax.set_title(self.kwargs.get("title", "") +
@@ -339,5 +345,17 @@ class Colorfit(object):
             ax.plot(self.polyfits_outputs[order]['outliers']['x'],
                     self.polyfits_outputs[order]['outliers']['y'], 'or')
         ax.legend(loc='best')
+
+        # If by catalog data are given, add an axis where data are plotted by catalog
+        if bycat_data is not None:
+            ax = fig.add_subplot(122)
+            ax.set_xlabel(self.kwargs.get("xlabel", ""))
+            ax.set_ylabel(self.kwargs.get("ylabel", ""))
+            ax.set_title(self.kwargs.get("title", ""))
+            for cdata in bycat_data:
+                ax.plot(cdata[2], cdata[0] - cdata[1], 'o', label=cdata[3])
+            ax.legend(loc='best')
+
+        # Save the whole figure
         fig.savefig("%s_VS_%s.png" % (self.kwargs.get("ylabel", "p1"),
                                       self.kwargs.get("xlabel", "p2")))
