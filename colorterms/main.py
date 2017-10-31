@@ -92,5 +92,5 @@ def colorterms(argv=None):
     # Initialize and run the color terms computation
     colorterm = Colorfits.Colorterms(catalogs, filters)
     colorterm.compute_colorterms(filtersets[0], filtersets[1], cuts=args.cuts,
-                                 sigma_clip=args.sigma, verbose=False)
-    #colorterm.save_colorterms(args.saveto)
+                                 sigma_clip=float(args.sigma), verbose=False)
+    colorterm.save_colorterms(args.saveto)

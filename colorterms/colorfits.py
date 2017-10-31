@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
 
+import os
+import yaml
 import numpy as np
 import pylab as plt
 from scipy import polyfit, polyval
@@ -20,6 +22,7 @@ class Colorterms(object):
         self.magnitudes = {}
         self.colorterms = {}
         self.pairs = {}
+        self.results = {}
 
     def _compute_magnitudes(self, first_fset, second_fset, catalog_list=None):
         """Compute the magnitudes for the two given system.
@@ -187,7 +190,7 @@ class Colorterms(object):
                     if verbose:
                         print("Order =", order, colfit.polyfits_outputs[order]['params'],
                               " (STD=%.3f)" % colfit.polyfits_outputs[order]['yresiduals_std'])
-                    results[order] = colfit.polyfits_outputs[order]['yresiduals_std']
+                    results[order] = colfit.polyfits_outputs[order]
 
         self._order_by_rms(first_fset, second_fset)
 
@@ -205,10 +208,19 @@ class Colorterms(object):
                     colors.append("f(%s(%s) - %s(%s)) [%i]" % (first_fset, color.split(',')[0],
                                                                first_fset, color.split(',')[1],
                                                                int(order)))
-                    results.append(localdic['results'][color][order])
+                    results.append(localdic['results'][color][order]['yresiduals_std'])
             for c, r in zip(np.array(colors)[np.argsort(results)], np.sort(results)):
                 print(c, ": RMS=%.3f" % r)
-                    
+
+    def save_colorterms(self, output="colorterms.yaml", update=True):
+        """Save results of the color term fits."""
+        print("INFO: Saving results in", output)
+        if os.path.exists(output) and update:
+            results = yaml.load(open(output, 'r'))
+            results.update(self.pairs)
+        else:
+            results = self.pairs
+        yaml.dump(results, open(output, 'w'))
 
     def plot_magdiff_vs_c(self, first_fset, second_fset, catalogs=None):
         """Magnitude difference as a function of color. DEPRECATED FOR NOW"""
@@ -278,11 +290,11 @@ class Colorfit(object):
                 output = self.polyfits_outputs[order]
             else:
                 output = self.polyfits_outputs[order] = {}
-            output['params'] = polyfit(self.color, self.magdiff, order)
-            output['ymodel'] = polyval(output["params"], self.color)
-            output['yresiduals'] = self.magdiff - output['ymodel']
-            output['yresiduals_mean'] = np.mean(output['yresiduals'])
-            output['yresiduals_std'] = np.std(output['yresiduals'])
+            output['params'] = list(polyfit(self.color, self.magdiff, order))
+            output['ymodel'] = list(polyval(output["params"], self.color))
+            output['yresiduals'] = list(self.magdiff - output['ymodel'])
+            output['yresiduals_mean'] = list(np.mean(output['yresiduals']))
+            output['yresiduals_std'] = list(np.std(output['yresiduals']))
             output['sigma_clip'] = np.inf if sigma_clip is None else sigma_clip
             if 'outliers' not in output:
                 output['outliers'] = {'x': [], 'y': []}
