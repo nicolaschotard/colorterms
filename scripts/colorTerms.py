@@ -4,4 +4,4 @@
 import sys
 from colorterms import main
 
-sys.exit(main.colorfit())
+sys.exit(main.colorterms())

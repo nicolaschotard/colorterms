@@ -8,10 +8,10 @@ from pkg_resources import resource_filename
 import yaml
 from . import filtersets as Filtersets
 from . import catalogs as Catalogs
-from . import colorterms as Colorterms
+from . import colorfits as Colorfits
 
 
-def colorfit(argv=None):
+def colorterms(argv=None):
     """Compute color terms to go from one filter set to an other.
 
     s1(f) = s2(f') + a * [s2(f') - s2(f'')] (+ other polynomial terms if asked)
@@ -78,7 +78,7 @@ def colorfit(argv=None):
     catalogs = Catalogs.load_catalogs(verbose=False)
 
     # Initialize and run the color terms computation
-    colorterm = Colorterms.Colorterms(catalogs, filters)
+    colorterm = Colorfits.Colorterms(catalogs, filters)
     colorterm.compute_colorterms(filtersets[0], filtersets[1], cuts=args.cuts,
                                  sigma_clip=args.sigma, verbose=False)
     #colorterm.save_colorterms(args.saveto)
