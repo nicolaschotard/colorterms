@@ -50,8 +50,8 @@ def colorterms(argv=None):
             print(" - %s" % cat)
 
         # Show how the 'cuts' yaml file should look like
-        cuts = open(resource_filename('colorterms', 'cuts.yaml'), 'r')
-        print("\nThe 'cuts' yaml file should look like that")
+        cuts = open(resource_filename('colorterms', 'default_cuts.yaml'), 'r')
+        print("\nHere is the default 'cuts' yaml file")
         print(cuts.read())
         cuts.close()
 
