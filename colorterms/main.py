@@ -30,6 +30,11 @@ def colorterms(argv=None):
                         "You can use the default cuts file by setting this option to 'default'.")
     parser.add_argument('--sigma', default=None,
                         help='Iterative sigma clipping while fitting.')
+    parser.add_argument('--catalogs', default=None,
+                        help="List of catalogs to use OR to exclude. Coma separated."
+                        " Add a dash at the end of your list to exclude (e.g.: c1,c2,-)."
+                        " You can also select (or exclude) several catalogs with names startig identicaly"
+                        " (e.g., calspec,- will exclude all calspec catalogs.")
     parser.add_argument('--saveto', default="colorterms.yaml",
                         help='Name of the file in which to save results.')
     parser.add_argument('--show', default=None,
@@ -49,7 +54,7 @@ def colorterms(argv=None):
             
         if args.show in ("catalogs", "all"):
             # Show the list of available catalogs
-            catalogs = Catalogs.get_catalog_list()
+            catalogs = Catalogs.load_catalogs(verbose=False)
             print("Available catalogs are:")
             for cat in sorted(catalogs):
                 print(" - %s" % cat)
@@ -89,8 +94,26 @@ def colorterms(argv=None):
     print("INFO: Loading filter catalogs")
     catalogs = Catalogs.load_catalogs(verbose=False)
 
+    # Check catalog list if gien by the user
+    if args.catalogs is not None:
+        args.catalogs = args.catalogs.split(',')
+        mode = 'exclude' if args.catalogs[-1] == '-' else 'select'
+
+        # Expend the list of catalogs in case a short name has been given (e.g., calspec)
+        args.catalogs = [cat for cat in catalogs
+                        if any([cat.startswith(cc) for cc in args.catalogs])]
+
+        # Build the final list of catalogs
+        args.catalogs = [cat for cat in catalogs if cat not in args.catalogs] \
+                        if mode == 'exclude' \
+                           else [cat for cat in catalogs if cat not in args.catalogs]
+        print("INFO: The following list of catalogs will be used:")
+        for cat in sorted(args.catalogs):
+            print(" -", cat)
+
     # Initialize and run the color terms computation
     colorterm = Colorfits.Colorterms(catalogs, filters)
     colorterm.compute_colorterms(filtersets[0], filtersets[1], cuts=args.cuts,
-                                 sigma_clip=float(args.sigma), verbose=False)
+                                 sigma_clip=float(args.sigma), verbose=False,
+                                 catalogs=args.catalogs)
     colorterm.save_colorterms(args.saveto)
