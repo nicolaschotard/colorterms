@@ -348,13 +348,15 @@ class Colorfit(object):
 
         # If by catalog data are given, add an axis where data are plotted by catalog
         if bycat_data is not None:
-            ax = fig.add_subplot(122)
-            ax.set_xlabel(self.kwargs.get("xlabel", ""))
-            ax.set_ylabel(self.kwargs.get("ylabel", ""))
-            ax.set_title(self.kwargs.get("title", ""))
+            ax2 = fig.add_subplot(122)
+            ax2.set_xlabel(self.kwargs.get("xlabel", ""))
+            ax2.set_ylabel(self.kwargs.get("ylabel", ""))
+            ax2.set_title(self.kwargs.get("title", ""))
             for cdata in bycat_data:
-                ax.plot(cdata[2], cdata[0] - cdata[1], 'o', label=cdata[3])
-            ax.legend(loc='best')
+                ax2.plot(cdata[2], cdata[0] - cdata[1], 'o', label=cdata[3])
+            ax2.set_xlim(ax.get_xlim())
+            ax2.set_ylim(ax.get_ylim())
+            ax2.legend(loc='best')
 
         # Save the whole figure
         fig.savefig("%s_VS_%s.png" % (self.kwargs.get("ylabel", "p1"),

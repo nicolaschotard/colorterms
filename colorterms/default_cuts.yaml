@@ -11,4 +11,7 @@
  'pan-starrs(g) - hsc(g)': {'min': 0.35, 'max': 0.55},
  'pan-starrs(r) - hsc(r)': {'min': -9},
  'pan-starrs(z) - hsc(z)': {'min': -1},
+ # pan-starrs <-> sdss
+ 'pan-starrs(y) - sdss(z)': {'max': -1},
+ 'pan-starrs(z) - sdss(z)': {'min': -2.6},
  }

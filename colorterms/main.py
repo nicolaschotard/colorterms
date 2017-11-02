@@ -2,6 +2,7 @@
 
 
 import sys
+from itertools import combinations
 from argparse import ArgumentParser
 from argparse import ArgumentDefaultsHelpFormatter
 from pkg_resources import resource_filename
@@ -24,7 +25,10 @@ def colorterms(argv=None):
     parser = ArgumentParser(prog=prog, usage=usage, description=description,
                             formatter_class=ArgumentDefaultsHelpFormatter)
     parser.add_argument('--sets', default=None,
-                        help='Filter sets s1 and s2. Coma separated. E.g., "sdss,megacam"')
+                        help='Filter sets s1, s2, s3, etc. Coma separated. E.g., "sdss,megacam".'
+                        'Any number of filter sets can be given. Fits for all combinations will '
+                        'be done. Set this option to "all" to fit for all possible combinations '
+                        'between available filter sets.')
     parser.add_argument('--cuts', default=None,
                         help='A yaml file containing cuts to be applied on magnitudes or colors.'
                         "You can use the default cuts file by setting this option to 'default'.")
@@ -33,8 +37,8 @@ def colorterms(argv=None):
     parser.add_argument('--catalogs', default=None,
                         help="List of catalogs to use OR to exclude. Coma separated."
                         " Add a dash at the end of your list to exclude (e.g.: c1,c2,-)."
-                        " You can also select (or exclude) several catalogs with names startig identicaly"
-                        " (e.g., calspec,- will exclude all calspec catalogs.")
+                        " You can also select (or exclude) several catalogs with names "
+                        "startig identicaly (e.g., calspec,- will exclude all calspec catalogs.")
     parser.add_argument('--saveto', default="colorterms.yaml",
                         help='Name of the file in which to save results.')
     parser.add_argument('--show', default=None,
@@ -68,18 +72,21 @@ def colorterms(argv=None):
 
         if args.show not in ("filters", "catalogs", "cuts", "all"):
             print("ERROR: Available data to be shown are: 'filters', 'catalogs', 'cuts', or 'all'")
-                
+
         # Exit
         sys.exit()
 
     # Make sure that the input filter sets are valid
-    filtersets = Filtersets.Filters(load=False)
-    if len(args.sets.split(',')) != 2:
-        raise IOError("You must give 2 valid sets of filters.")
-    elif any([filt not in filtersets.filtersets for filt in args.sets.split(',')]):
-        raise IOError("Some given filter sets do not exist (--show to get the full list).")
+    filtersets = list(Filtersets.Filters(load=False).filtersets.keys())
+    if args.sets == 'all':
+        # Take all filter sets
+        filterset_combinations = combinations(filtersets, 2)
+    elif len(args.sets.split(',')) < 2:
+        raise IOError("You must give at least 2 valid sets of filters.")
+    elif any([filt not in filtersets for filt in args.sets.split(',')]):
+        raise IOError("Some given filter sets do not exist (get the list with `--show filters`).")
     else:
-        filtersets = args.sets.split(',')
+        filterset_combinations = combinations(args.sets.split(','), 2)
 
     # Check if a 'cuts' dictionnary has been given
     if args.cuts is not None:
@@ -94,7 +101,7 @@ def colorterms(argv=None):
     print("INFO: Loading filter catalogs")
     catalogs = Catalogs.load_catalogs(verbose=False)
 
-    # Check catalog list if gien by the user
+    # Check catalog list if given by the user
     if args.catalogs is not None:
         args.catalogs = args.catalogs.split(',')
         mode = 'exclude' if args.catalogs[-1] == '-' else 'select'
@@ -111,9 +118,9 @@ def colorterms(argv=None):
         for cat in sorted(args.catalogs):
             print(" -", cat)
 
-    # Initialize and run the color terms computation
+    # Initialize and run the color terms computation for all filter set combinations
     colorterm = Colorfits.Colorterms(catalogs, filters)
-    colorterm.compute_colorterms(filtersets[0], filtersets[1], cuts=args.cuts,
-                                 sigma_clip=float(args.sigma), verbose=False,
-                                 catalogs=args.catalogs)
+    for sets in filterset_combinations:        
+        colorterm.compute_colorterms(sets[0], sets[1], cuts=args.cuts, sigma_clip=float(args.sigma),
+                                     verbose=False, catalogs=args.catalogs)
     colorterm.save_colorterms(args.saveto)
