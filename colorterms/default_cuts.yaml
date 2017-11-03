@@ -7,11 +7,34 @@
  'megacam(i) - sdss(i)': {'min': -0.8},
  'sdss(i) - sdss(r)': {'max': 1},
  'megacam(z) - sdss(z)': {'min': -1.35, 'max': -1.05},
+
  # pan-starrs <-> hsc
  'pan-starrs(g) - hsc(g)': {'min': 0.35, 'max': 0.55},
  'pan-starrs(r) - hsc(r)': {'min': -9},
  'pan-starrs(z) - hsc(z)': {'min': -1},
+
  # pan-starrs <-> sdss
  'pan-starrs(y) - sdss(z)': {'max': -1},
  'pan-starrs(z) - sdss(z)': {'min': -2.6},
+ 'sdss(g) - pan-starrs(g)': {'max': 1},
+ 'sdss(i) - pan-starrs(i)': {'min': 0.945, 'max': 1.1},
+
+ # pan-starrs
+ 'pan-starrs(r) - pan-starrs(g)': {'max': 1},
+ 'pan-starrs(z) - pan-starrs(i)': {'min': -2},
+ 'pan-starrs(z) - pan-starrs(y)': {'max': 0.5},
+ 'pan-starrs(g) - pan-starrs(r)': {'min': -1, 'max': 2},
+ 'pan-starrs(i) - pan-starrs(z)': {'min': -1, 'max': 1},
+ 'pan-starrs(i) - pan-starrs(z)': {'min': -1, 'max': 1},
+
+ # megacam3 <-> pan-starrs
+ 'megacam3(z) - pan-starrs(y)': {'min': -2.5},
+ 'megacam3(g) - pan-starrs(g)': {'min': -1.5},
+ 'megacam3(i) - pan-starrs(i)': {'min': -2},
+ 'megacam3(r) - pan-starrs(r)': {'min': -1.25},
+
+ # hsc
+ 'hsc(r) - hsc(i)': {'max': 2},
+ 'hsc(g) - hsc(r)': {'min': -8},
+ 'hsc(i) - hsc(z)': {'min': 0},
  }

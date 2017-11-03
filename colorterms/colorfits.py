@@ -179,6 +179,10 @@ class Colorterms(object):
                           (second_fset, filt, first_fset, localdic['filter'],
                            first_fset, color[0], first_fset, color[1]))
                 m0, m1, col = self._get_data(first_fset, second_fset, filt, color, catalogs, cuts)
+                if not any(m0-m1):
+                    print("WARNING: Skipping  these two identical filters: %s(%s) & %s(%s)" % \
+                          (second_fset, filt, first_fset, localdic['filter']))
+                    continue
                 colfit = Colorfit(m0 - m1, col,
                                   xlabel="%s(%s) - %s(%s)" % (first_fset, color[0],
                                                               first_fset, color[1]),
@@ -188,7 +192,8 @@ class Colorterms(object):
                 colfit.polyfits(sigma_clip=sigma_clip)
                 bcd = np.transpose([self._get_data(first_fset, second_fset, filt, color, [catalog],
                                                    cuts) for catalog in catalogs])
-                colfit.plots(bycat_data=np.transpose([bcd[0], bcd[1], bcd[2], catalogs]))
+                colfit.plots(dirname="%s_%s" % (first_fset, second_fset),
+                             bycat_data=np.transpose([bcd[0], bcd[1], bcd[2], catalogs]))
                 results = localdic['results'][",".join(color)] = {}
                 for order in colfit.polyfits_outputs:
                     if verbose:
@@ -324,7 +329,7 @@ class Colorfit(object):
                 output['yresiduals_std'] = np.std(output['yresiduals'])
                 output['sigma_clip'] = np.inf if sigma_clip is None else sigma_clip
 
-    def plots(self, bycat_data=None):
+    def plots(self, bycat_data=None, dirname="."):
         """Plot the polynomial fit results."""
         if len(self.polyfits_outputs) == 0:
             raise "INFO: You must run the polyfits method first"
@@ -359,5 +364,8 @@ class Colorfit(object):
             ax2.legend(loc='best')
 
         # Save the whole figure
-        fig.savefig("%s_VS_%s.png" % (self.kwargs.get("ylabel", "p1"),
-                                      self.kwargs.get("xlabel", "p2")))
+        if not os.path.exists(dirname):
+            os.mkdir(dirname)
+        fig.savefig("%s/%s_VS_%s.png" % (dirname,
+                                         self.kwargs.get("ylabel", "p1"),
+                                         self.kwargs.get("xlabel", "p2")))

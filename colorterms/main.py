@@ -38,7 +38,7 @@ def colorterms(argv=None):
                         help="List of catalogs to use OR to exclude. Coma separated."
                         " Add a dash at the end of your list to exclude (e.g.: c1,c2,-)."
                         " You can also select (or exclude) several catalogs with names "
-                        "startig identicaly (e.g., calspec,- will exclude all calspec catalogs.")
+                        "starting identicaly (e.g., calspec,- will exclude all calspec catalogs.")
     parser.add_argument('--saveto', default="colorterms.yaml",
                         help='Name of the file in which to save results.')
     parser.add_argument('--show', default=None,
@@ -120,7 +120,7 @@ def colorterms(argv=None):
 
     # Initialize and run the color terms computation for all filter set combinations
     colorterm = Colorfits.Colorterms(catalogs, filters)
-    for sets in filterset_combinations:        
+    for sets in filterset_combinations:
         colorterm.compute_colorterms(sets[0], sets[1], cuts=args.cuts, sigma_clip=float(args.sigma),
                                      verbose=False, catalogs=args.catalogs)
     colorterm.save_colorterms(args.saveto)
