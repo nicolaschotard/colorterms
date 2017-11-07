@@ -19,7 +19,7 @@ megacam3: {filters: {g: g.dat,
                      r: r.dat,
                      u: u.dat,
                      z: z.dat},
-           units: {wavelength: 1e-9,
+           units: {wavelength: 1e-10,
                    flux: None}
           }
 sdss: {filters: {g: g.dat,
