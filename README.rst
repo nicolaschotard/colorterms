@@ -5,7 +5,36 @@
 colorterms
 ==========
 
-Compute color terms that allows to go from one filter system to an other.
+Compute color terms that allows to go from one filter system to an other::
+
+  colorTerms.py [options]
+
+Available options are::
+
+  -h, --help           show this help message and exit
+  --sets SETS          Filter sets s1, s2, s3, etc. Coma separated. E.g.,
+                       "sdss,megacam".Any number of filter sets can be given.
+                       Fits for all combinations will be done. Set this option
+                       to "all" to fit for all possible combinations between
+                       available filter sets. (default: None)
+  --cuts CUTS          A yaml file containing cuts to be applied on magnitudes
+                       or colors.You can use the default cuts file by setting
+                       this option to 'default'. (default: None)
+  --sigma SIGMA        Iterative sigma clipping while fitting. (default: None)
+  --catalogs CATALOGS  List of catalogs to use OR to exclude. Coma separated.
+                       Add a dash at the end of your list to exclude (e.g.:
+                       c1,c2,-). You can also select (or exclude) several
+                       catalogs with names starting identicaly (e.g.,
+                       calspec,- will exclude all calspec catalogs. (default:
+                       None)
+  --saveto SAVETO      Name of the file in which to save results. (default:
+                       colorterms.yaml)
+  --show SHOW          Show the list of available filter sets, catalogs, or
+                       the content of the default yaml file containg the
+                       'cuts', and exitAvailable values are: filters,
+                       catalogs, cuts, and all. (default: None)
+
+Main results are available in the `results <results>` directory.
 
 References
 ==========
