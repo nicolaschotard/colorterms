@@ -80,13 +80,15 @@ def colorterms(argv=None):
     filtersets = list(Filtersets.Filters(load=False).filtersets.keys())
     if args.sets == 'all':
         # Take all filter sets
-        filterset_combinations = combinations(filtersets, 2)
+        filterset_combinations = list(combinations(filtersets, 2))
+        filterset_combinations.extend(list(combinations(filtersets[::-1], 2)))
     elif len(args.sets.split(',')) < 2:
         raise IOError("You must give at least 2 valid sets of filters.")
     elif any([filt not in filtersets for filt in args.sets.split(',')]):
         raise IOError("Some given filter sets do not exist (get the list with `--show filters`).")
     else:
-        filterset_combinations = combinations(args.sets.split(','), 2)
+        filterset_combinations = list(combinations(args.sets.split(','), 2))
+        filterset_combinations.extend(list(combinations(args.sets.split(',')[::-1], 2)))
 
     # Check if a 'cuts' dictionnary has been given
     if args.cuts is not None:
@@ -120,7 +122,7 @@ def colorterms(argv=None):
 
     # Initialize and run the color terms computation for all filter set combinations
     colorterm = Colorfits.Colorterms(catalogs, filters)
-    for sets in filterset_combinations:
+    for sets in sorted(filterset_combinations):
         colorterm.compute_colorterms(sets[0], sets[1], cuts=args.cuts, sigma_clip=float(args.sigma),
                                      verbose=False, catalogs=args.catalogs)
     colorterm.save_colorterms(args.saveto)
