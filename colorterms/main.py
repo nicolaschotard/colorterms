@@ -26,12 +26,12 @@ def colorterms(argv=None):
                             formatter_class=ArgumentDefaultsHelpFormatter)
     parser.add_argument('--sets', default=None,
                         help='Filter sets s1, s2, s3, etc. Coma separated. E.g., "sdss,megacam".'
-                        'Any number of filter sets can be given. Fits for all combinations will '
-                        'be done. Set this option to "all" to fit for all possible combinations '
-                        'between available filter sets.')
+                        ' Any number of filter sets can be given. Fits for all combinations will'
+                        ' be done. Set this option to "all" to fit for all possible combinations'
+                        ' between available filter sets.')
     parser.add_argument('--cuts', default=None,
                         help='A yaml file containing cuts to be applied on magnitudes or colors.'
-                        "You can use the default cuts file by setting this option to 'default'.")
+                        " You can use the default cuts file by setting this option to 'default'.")
     parser.add_argument('--sigma', default=None,
                         help='Iterative sigma clipping while fitting.')
     parser.add_argument('--catalogs', default=None,
@@ -43,7 +43,7 @@ def colorterms(argv=None):
                         help='Name of the file in which to save results.')
     parser.add_argument('--show', default=None,
                         help="Show the list of available filter sets, catalogs, or the content "
-                        "of the default yaml file containg the 'cuts', and exit"
+                        "of the default yaml file containg the 'cuts', and exit. "
                         "Available values are: filters, catalogs, cuts, and all.")
     args = parser.parse_args(['--help']) if len(sys.argv) == 1 else parser.parse_args(argv)
 
@@ -125,4 +125,5 @@ def colorterms(argv=None):
     for sets in sorted(filterset_combinations):
         colorterm.compute_colorterms(sets[0], sets[1], cuts=args.cuts, sigma_clip=float(args.sigma),
                                      verbose=False, catalogs=args.catalogs)
+    colorterm.build_colorterms_dict()
     colorterm.save_colorterms(args.saveto)

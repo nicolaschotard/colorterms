@@ -2,6 +2,8 @@
 
 
 import os
+import copy
+import pickle
 import yaml
 import numpy as np
 import pylab as plt
@@ -86,7 +88,7 @@ class Colorterms(object):
                 # Only keep colors where the closest filter is also part of the color definition
                 colors = [c for c in colors if c[0] == closest_filt]
                 paired[filt_2]['colors'] = colors
-            self.pairs[second_fset][first_fset] = paired
+                self.pairs[second_fset][first_fset] = paired
 
     def _get_data(self, first_fset, second_fset, filt, color, catalogs, cuts):
         """Return valid data."""
@@ -190,6 +192,7 @@ class Colorterms(object):
                                                               localdic['filter']),
                                   title="%s, %s filter" % (second_fset, filt))
                 colfit.polyfits(sigma_clip=sigma_clip)
+                # By Catalog Data (for the final plots)
                 bcd = np.transpose([self._get_data(first_fset, second_fset, filt, color, [catalog],
                                                    cuts) for catalog in catalogs])
                 colfit.plots(dirname="%s_%s" % (first_fset, second_fset),
@@ -200,17 +203,19 @@ class Colorterms(object):
                         print("Order =", order, colfit.polyfits_outputs[order]['params'],
                               " (STD=%.3f)" % colfit.polyfits_outputs[order]['yresiduals_std'])
                     results[order] = colfit.polyfits_outputs[order]
+        
 
+        # Order results by rms and print them
         self._order_by_rms(first_fset, second_fset)
 
     def _order_by_rms(self, first_fset, second_fset):
-                        
+        
         # Order them by best RMS for each pair
         for filt in self.pairs[second_fset][first_fset]:
             localdic = self.pairs[second_fset][first_fset][filt]
             print(" BEST FIT FOR: %s(%s) - %s(%s) = f(%s(??) - %s(??))" %
-                      (second_fset, filt, first_fset, localdic['filter'],
-                       first_fset, first_fset))
+                  (second_fset, filt, first_fset, localdic['filter'],
+                   first_fset, first_fset))
             colors, results = [], []
             for color in localdic['results']:
                 for order in localdic['results'][color]:
@@ -221,15 +226,33 @@ class Colorterms(object):
             for c, r in zip(np.array(colors)[np.argsort(results)], np.sort(results)):
                 print(c, ": RMS=%.3f" % r)
 
+    def build_colorterms_dict(self):
+        """Create a readable color terms dictionary."""
+        self.colorterms = copy.deepcopy(self.pairs)
+        for second_fset in self.colorterms:
+            for first_fset in self.colorterms[second_fset]:
+                for filt in self.colorterms[second_fset][first_fset]:
+                    localdic = self.colorterms[second_fset][first_fset][filt]
+                    for results in localdic['results']:
+                        for order in results:
+                            print(order)
+                            results[order] = results[order]['params']
+
     def save_colorterms(self, output="colorterms.yaml", update=True):
         """Save results of the color term fits."""
         print("INFO: Saving results in", output)
+        print(self.colorterms)
         if os.path.exists(output) and update:
-            results = yaml.load(open(output, 'r'))
+            print("INFO: Updating")
+            colorterms = yaml.load(open(output, 'r'))
+            colorterms.update(self.colorterms)
+            results = pickle.load(open('colorfit_results.pkl', 'rb'))
             results.update(self.pairs)
         else:
+            colorterms = self.colorterms
             results = self.pairs
-        yaml.dump(results, open(output, 'w'))
+        yaml.dump(colorterms, open(output, 'w'))
+        pickle.dump(results, open('colorfit_results.pkl', 'wb'))
 
     def plot_magdiff_vs_c(self, first_fset, second_fset, catalogs=None):
         """Magnitude difference as a function of color. DEPRECATED FOR NOW"""
@@ -299,6 +322,7 @@ class Colorfit(object):
                 output = self.polyfits_outputs[order]
             else:
                 output = self.polyfits_outputs[order] = {}
+            # polyfit returns y = p[deg]*x**deg + p[deg-1]*x**(deg-1) + ... + p[0]
             output['params'] = list(polyfit(self.color, self.magdiff, order))
             output['ymodel'] = list(polyval(output["params"], self.color))
             output['yresiduals'] = list(self.magdiff - output['ymodel'])
