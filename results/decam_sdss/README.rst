@@ -1,0 +1,9 @@
+.. image:: sdss(u)-decam(u)_VS_decam(u)-decam(g).png
+.. image:: sdss(g)-decam(g)_VS_decam(g)-decam(u).png
+.. image:: sdss(z)-decam(z)_VS_decam(z)-decam(Y).png
+.. image:: sdss(i)-decam(i)_VS_decam(i)-decam(r).png
+.. image:: sdss(r)-decam(r)_VS_decam(r)-decam(g).png
+.. image:: sdss(z)-decam(z)_VS_decam(z)-decam(i).png
+.. image:: sdss(i)-decam(i)_VS_decam(i)-decam(z).png
+.. image:: sdss(g)-decam(g)_VS_decam(g)-decam(r).png
+.. image:: sdss(r)-decam(r)_VS_decam(r)-decam(i).png
