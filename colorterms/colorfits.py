@@ -79,15 +79,15 @@ class Colorterms(object):
                 amin = np.argmin(diff)
                 # Closest one
                 closest_filt = self.filters.ordered[first_fset][amin]
-                paired[filt_2] = {'filter': closest_filt}
+                paired[str(filt_2)] = {'filter': str(closest_filt)}
                 # Colors corresponding to this closest filter
                 filts = list(self.filters.ordered[first_fset])
                 colors = np.concatenate([((filt, (filts + filts[:1])[i - 1]),
                                           (filt, (filts + filts[:1])[i + 1]))
                                          for i, filt in enumerate(filts)])[1:-1]
                 # Only keep colors where the closest filter is also part of the color definition
-                colors = [c for c in colors if c[0] == closest_filt]
-                paired[filt_2]['colors'] = colors
+                colors = [list(c) for c in colors if c[0] == closest_filt]
+                paired[str(filt_2)]['colors'] = colors
                 self.pairs[second_fset][first_fset] = paired
 
     def _get_data(self, first_fset, second_fset, filt, color, catalogs, cuts):
@@ -233,16 +233,17 @@ class Colorterms(object):
         for second_fset in self.colorterms:
             for first_fset in self.colorterms[second_fset]:
                 for filt in self.colorterms[second_fset][first_fset]:
-                    localdic = self.colorterms[second_fset][first_fset][filt]
-                    for results in localdic['results']:
-                        for order in results:
-                            print(order)
-                            results[order] = results[order]['params']
+                    print(self.colorterms[second_fset][first_fset][filt].keys())
+                    self.colorterms[second_fset][first_fset][filt].pop('filter')
+                    self.colorterms[second_fset][first_fset][filt].pop('colors')
+                    localdic = self.colorterms[second_fset][first_fset][filt]['results']
+                    for color in localdic:
+                        for order in localdic[color]:
+                            localdic[color][order] = np.array(localdic[color][order]['params']).tolist()
 
     def save_colorterms(self, output="colorterms.yaml", update=True):
         """Save results of the color term fits."""
         print("INFO: Saving results in", output)
-        print(self.colorterms)
         if os.path.exists(output) and update:
             print("INFO: Updating")
             colorterms = yaml.load(open(output, 'r'))
