@@ -158,6 +158,6 @@ def makereadme(argv=None):
               % (dirname, len(fignames)))
         readme = open('%s/README.rst' % dirname, 'w')
         for fig in fignames:
-            readme.write('.. image:: "%s"\n' % fig)
+            readme.write('.. image:: %s\n' % fig)
         readme.close()
 

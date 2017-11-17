@@ -218,6 +218,7 @@ class Colorterms(object):
                    first_fset, first_fset))
             colors, results = [], []
             for color in localdic['results']:
+
                 for order in localdic['results'][color]:
                     colors.append("f(%s(%s) - %s(%s)) [%i]" % (first_fset, color.split(',')[0],
                                                                first_fset, color.split(',')[1],
@@ -390,6 +391,7 @@ class Colorfit(object):
         # Save the whole figure
         if not os.path.exists(dirname):
             os.mkdir(dirname)
-        fig.savefig("%s/%s_VS_%s.png" % (dirname,
-                                         self.kwargs.get("ylabel", "p1"),
-                                         self.kwargs.get("xlabel", "p2")))
+        fig.savefig("%s/%s_VS_%s.png" % \
+                    (dirname,
+                     self.kwargs.get("ylabel", "p1").replace(' ', ''),
+                     self.kwargs.get("xlabel", "p2").replace(' ', '')))
