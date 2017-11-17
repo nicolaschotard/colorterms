@@ -1,11 +1,13 @@
 """Main entry point for colorterms package scripts."""
 
 
+import os
 import sys
 from itertools import combinations
 from argparse import ArgumentParser
 from argparse import ArgumentDefaultsHelpFormatter
 from pkg_resources import resource_filename
+from numpy import array as nparray
 import yaml
 from . import filtersets as Filtersets
 from . import catalogs as Catalogs
@@ -127,3 +129,35 @@ def colorterms(argv=None):
                                      verbose=False, catalogs=args.catalogs)
     colorterm.build_colorterms_dict()
     colorterm.save_colorterms(args.saveto)
+
+
+def makereadme(argv=None):
+    """Create a README.rst file for each sub directory containing plots."""
+
+    description = """Create a README.rst file for each sub directory containing plots."""
+    prog = "makereadme.py"
+    usage = """%s [options]""" % prog
+
+    parser = ArgumentParser(prog=prog, usage=usage, description=description,
+                            formatter_class=ArgumentDefaultsHelpFormatter)
+    parser.add_argument('--dir', default=None,
+                        help='Directory were figures are saved (this also works recursively).')
+    # Show the help message if no argument or option are given
+    args = parser.parse_args(['--help']) if len(sys.argv) == 1 else parser.parse_args(argv)
+
+    # Get directories
+    dirs = os.walk(args.dir)
+
+    # Loop over them and create the README.rst file
+    for cdir in dirs:
+        dirname = cdir[0]
+        fignames = [f for f in cdir[2] if f.endswith('png')]
+        if len(fignames) == 0:
+            continue
+        print("INFO: Current directory is %s (%i figure written is the README)" \
+              % (dirname, len(fignames)))
+        readme = open('%s/README.rst' % dirname, 'w')
+        for fig in fignames:
+            readme.write(".. image:: %s\n" % fig)
+        readme.close()
+

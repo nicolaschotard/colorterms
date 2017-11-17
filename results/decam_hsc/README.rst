@@ -1,0 +1,9 @@
+.. image:: hsc(g) - decam(g)_VS_decam(g) - decam(r).png
+.. image:: hsc(r) - decam(r)_VS_decam(r) - decam(i).png
+.. image:: hsc(r) - decam(r)_VS_decam(r) - decam(g).png
+.. image:: hsc(i) - decam(i)_VS_decam(i) - decam(r).png
+.. image:: hsc(g) - decam(g)_VS_decam(g) - decam(u).png
+.. image:: hsc(Y) - decam(Y)_VS_decam(Y) - decam(z).png
+.. image:: hsc(i) - decam(i)_VS_decam(i) - decam(z).png
+.. image:: hsc(z) - decam(z)_VS_decam(z) - decam(i).png
+.. image:: hsc(z) - decam(z)_VS_decam(z) - decam(Y).png

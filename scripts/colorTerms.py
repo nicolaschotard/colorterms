@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Load the cluster data."""
+"""Compute color terms."""
 
 import sys
 from colorterms import main
