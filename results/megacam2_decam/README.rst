@@ -1,9 +1,0 @@
-.. image:: decam(i) - megacam2(i2)_VS_megacam2(i2) - megacam2(z).png
-.. image:: decam(g) - megacam2(g)_VS_megacam2(g) - megacam2(u).png
-.. image:: decam(u) - megacam2(u)_VS_megacam2(u) - megacam2(g).png
-.. image:: decam(i) - megacam2(i2)_VS_megacam2(i2) - megacam2(r).png
-.. image:: decam(r) - megacam2(r)_VS_megacam2(r) - megacam2(g).png
-.. image:: decam(g) - megacam2(g)_VS_megacam2(g) - megacam2(r).png
-.. image:: decam(r) - megacam2(r)_VS_megacam2(r) - megacam2(i2).png
-.. image:: decam(z) - megacam2(z)_VS_megacam2(z) - megacam2(i2).png
-.. image:: decam(Y) - megacam2(z)_VS_megacam2(z) - megacam2(i2).png
