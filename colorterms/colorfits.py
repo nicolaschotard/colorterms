@@ -239,7 +239,11 @@ class Colorterms(object):
                     localdic = self.colorterms[second_fset][first_fset][filt]['results']
                     for color in localdic:
                         for order in localdic[color]:
-                            localdic[color][order] = np.array(localdic[color][order]['params']).tolist()
+                            res = {'params': np.array(localdic[color][order]['params']).tolist(),
+                                   'std': float(localdic[color][order]['yresiduals_std']),
+                                   'mean': float(localdic[color][order]['yresiduals_mean']),
+                                   'noutliers': int(localdic[color][order]['noutliers'])}
+                            localdic[color][order] = res
 
     def save_colorterms(self, output="colorterms.yaml", update=True):
         """Save results of the color term fits."""
@@ -354,6 +358,7 @@ class Colorfit(object):
                 output['yresiduals_mean'] = np.mean(output['yresiduals'])
                 output['yresiduals_std'] = np.std(output['yresiduals'])
                 output['sigma_clip'] = np.inf if sigma_clip is None else sigma_clip
+                output['noutliers'] = len(output['outliers']['x'])
 
     def plots(self, bycat_data=None, dirname="."):
         """Plot the polynomial fit results."""
